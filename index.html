@@ -268,7 +268,7 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
       <p class="src" id="cstat"></p>
       <div class="crow" id="bk"><button class="btn sub" type="button" id="exp">내 메뉴 내보내기</button><button class="btn sub" type="button" id="impb">가져오기</button><input type="file" id="imp" accept=".json,application/json" hidden><span class="hint" id="bkmsg"></span></div>
       <p class="src" id="src"></p>
-      <p class="src">앱 버전 2026.10.27f</p>
+      <p class="src">앱 버전 2026.10.27g</p>
     </section>
 
     <aside class="slip" id="slip" aria-labelledby="s3">
@@ -330,7 +330,8 @@ const S = { brand: saved.brand && BRANDS.some(b=>b.id===saved.brand) ? saved.bra
   cat: '전체', q: '', sort: 'value', carts: saved.carts || {}, open: null, example: !saved.carts, edit: null, delArm: null };
 if (S.example) S.carts = { lotteria: [ {k:'버거|리아 불고기', qty:1, dc:{}}, {k:'사이드(디저트)|지파이 고소한맛(S)', qty:1, dc:{store:3500}} ] };
 Object.values(S.carts).forEach(c => c.forEach(l => { if (typeof l.dc === 'number') l.dc = {store:l.dc}; else if (!l.dc || typeof l.dc !== 'object') l.dc = {}; }));
-const save = () => { S.example = false; try { localStorage.setItem('p20', JSON.stringify({brand:S.brand, mode:S.mode, carts:S.carts})); } catch {} };
+S.pay = (saved.pay && typeof saved.pay === 'object') ? saved.pay : {};
+const save = () => { S.example = false; try { localStorage.setItem('p20', JSON.stringify({brand:S.brand, mode:S.mode, carts:S.carts, pay:S.pay})); } catch {} };
 
 // ---------- custom menus: private db subtree, browser fallback ----------
 const LSK = 'p20custom';
@@ -560,18 +561,43 @@ function renderSlip(){
     }
     ul.appendChild(li);
   });
+  // 최종 결제 금액 직접 입력 (묶음 할인 등) — 담은 메뉴·수량이 바뀌면 자동으로 풀림
+  const sig = c.map(l => l.k + 'x' + l.qty).join(',');
+  const pb = (S.pay[S.brand] ||= {}); let po = pb[m];
+  if (po && (po.sig !== sig || !c.length)) { delete pb[m]; po = null; save(); }
+  const itemTotal = total; if (po) total = po.v;
   const v = per20(total, prot); const t = c.length && total + prot > 0 ? tier(v) : 'na';
   const counted = c.filter(l => (l.dc[m] ?? priceOf(itemOf(l.k))) != null);
-  document.getElementById('tot').innerHTML = c.length ? `
+  const tot = document.getElementById('tot');
+  tot.innerHTML = c.length ? `
     <dt>메뉴 ${counted.reduce((a,l)=>a+l.qty,0)}개 ${MODE[m]} 정가</dt><dd>${won(orig)}</dd>
-    ${orig !== total ? `<div class="save" style="display:contents"><dt>할인</dt><dd>−${won(orig - total)}</dd></div>` : ''}
-    <dt>결제 금액</dt><dd>${won(total)}</dd><dt>총 단백질</dt><dd>${fmt(prot)}g</dd>
+    ${orig !== itemTotal ? `<div class="save" style="display:contents"><dt>메뉴별 할인</dt><dd>−${won(orig - itemTotal)}</dd></div>` : ''}
+    ${po ? `<div class="save" style="display:contents"><dt>묶음·결제 할인</dt><dd>−${won(itemTotal - total)}</dd></div>` : ''}
+    <dt>결제 금액 <button type="button" class="dc ${po ? 'applied' : ''}" id="payBtn" aria-expanded="${!!S.payOpen}" style="margin-left:6px">${po ? '직접 입력함' : '직접 입력'}</button></dt><dd>${won(total)}</dd>
+    ${S.payOpen ? `<form class="dcbox" id="payForm" style="grid-column:1/-1"><label for="pay-in">실제 결제 금액 (${MODE[m]}, 전체)</label>
+      <input id="pay-in" type="number" inputmode="numeric" min="0" step="10" value="${po ? po.v : ''}" placeholder="${itemTotal}">
+      <span style="font-size:12.5px">원</span><button class="mini" type="submit">적용</button>
+      ${po ? '<button class="mini ghost" type="button" id="payReset">취소</button>' : ''}
+      <p class="err" hidden></p><p style="flex-basis:100%;margin:0;font-size:12px;color:var(--muted)">2+1·묶음 할인처럼 메뉴별로 나누기 어려운 할인은 영수증의 최종 금액을 넣으세요. 메뉴나 수량을 바꾸면 다시 계산 금액으로 돌아갑니다.</p></form>` : ''}
+    <dt>총 단백질</dt><dd>${fmt(prot)}g</dd>
     ${skipped ? `<dt style="grid-column:1/-1;color:var(--bad)">가격 없는 메뉴 ${skipped}개는 계산에서 뺐습니다</dt>` : ''}` : '';
+  if (c.length) {
+    tot.querySelector('#payBtn').onclick = () => { S.payOpen = !S.payOpen; renderSlip(); if (S.payOpen) setTimeout(() => document.getElementById('pay-in')?.focus(), 0); };
+    const pf = tot.querySelector('#payForm');
+    if (pf) {
+      pf.onsubmit = e => { e.preventDefault(); const raw = pf.querySelector('input').value.trim(); const n = Number(raw); const err = pf.querySelector('.err');
+        if (raw === '' || !isFinite(n) || n < 0) { err.textContent = '0원 이상 숫자로 입력하세요.'; err.hidden = false; return; }
+        if (n > itemTotal) { err.textContent = `계산된 금액(${won(itemTotal)})보다 높습니다. 할인된 최종 금액을 넣으세요.`; err.hidden = false; return; }
+        if (Math.round(n) === itemTotal) delete pb[m]; else pb[m] = {v: Math.round(n), sig};
+        S.payOpen = false; save(); renderSlip(); };
+      const pr = tot.querySelector('#payReset'); if (pr) pr.onclick = () => { delete pb[m]; S.payOpen = false; save(); renderSlip(); };
+    }
+  }
   const vd = document.getElementById('verdict'); vd.className = 'verdict ' + t;
   const est = m === 'dlv' && c.some(l => itemOf(l.k).nd === '추정' && l.dc.dlv == null);
   if (!c.length) vd.innerHTML = `<span class="lbl">단백질 20g당 가격</span><span class="val">—</span><span class="word">—</span><span class="why">메뉴를 담으면 등급이 나옵니다.</span>`;
   else if (v === null) vd.innerHTML = `<span class="lbl">단백질 20g당 가격</span><span class="val">계산 불가</span><span class="word">—</span><span class="why">${prot < 1 && total > 0 ? '담은 메뉴의 단백질이 1g 미만입니다.' : '가격이 있는 메뉴가 없습니다.'}</span>`;
-  else vd.innerHTML = `<span class="lbl">단백질 20g당 가격 · ${MODE[m]}${est ? ' (추정가 포함)' : ''}</span><span class="val">${Math.round(v).toLocaleString('ko-KR')}<small>원</small></span><span class="word">${WORD[t]}</span>
+  else vd.innerHTML = `<span class="lbl">단백질 20g당 가격 · ${MODE[m]}${est ? ' (추정가 포함)' : ''}${po ? ' · 입력 금액' : ''}</span><span class="val">${Math.round(v).toLocaleString('ko-KR')}<small>원</small></span><span class="word">${WORD[t]}</span>
     <span class="why">${rankText(v)}</span>`;
   document.getElementById('b1').textContent = c.length ? `${MODE[m]} ${won(total)} · 단백질 ${fmt(prot)}g` : '담은 메뉴 없음';
   const b2 = document.getElementById('b2'); b2.className = 'b2 ' + t; b2.textContent = c.length && v !== null ? WORD[t] + ' · 20g ' + won(v) : '';
