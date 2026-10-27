@@ -191,7 +191,7 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
 .det td{font-family:var(--mono);font-size:13.5px}
 .det td:first-child{font-family:var(--body);font-weight:500}
 .det tr.hl td{font-weight:700}
-.det .bar{display:block;height:4px;border-radius:2px;background:var(--sunk);margin-top:3px;position:static}
+.det .bar{display:block!important;height:4px;border-radius:2px;background:var(--sunk);margin-top:3px;position:static;padding:0!important;z-index:auto}
 .det .bar i{display:block;height:100%;border-radius:2px;background:var(--accent)}
 .det .bar i.hi{background:var(--bad)}
 .det-p{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -205,6 +205,13 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
 .det-pt .k{font-size:12px;color:var(--muted)}
 .det-pt .v{font:600 15px var(--body)}
 .det-pt ul{margin:0;padding-left:18px;font-size:12.5px;color:var(--muted)}
+.nutbtn{appearance:none;margin:0 12px 12px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);border-radius:8px;padding:9px 12px;font:600 14px var(--body);cursor:pointer}
+.nutbtn:hover{background:var(--accent);color:var(--accent-ink)}
+.nut-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.det table.nut-items{font-size:12.5px;min-width:440px}
+.det table.nut-items td{font-size:12.5px}
+.det table.nut-items td:first-child{white-space:normal;max-width:150px}
+.det-sub{margin:0;font-size:13px;font-weight:600}
 .det-n{font-size:12px;color:var(--muted);margin:0;line-height:1.6}
 </style>
 </head>
@@ -268,7 +275,7 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
       <p class="src" id="cstat"></p>
       <div class="crow" id="bk"><button class="btn sub" type="button" id="exp">내 메뉴 내보내기</button><button class="btn sub" type="button" id="impb">가져오기</button><input type="file" id="imp" accept=".json,application/json" hidden><span class="hint" id="bkmsg"></span></div>
       <p class="src" id="src"></p>
-      <p class="src">앱 버전 2026.10.27h</p>
+      <p class="src">앱 버전 2026.10.27i</p>
     </section>
 
     <aside class="slip" id="slip" aria-labelledby="s3">
@@ -279,6 +286,7 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
       <ul class="lines" id="lines"></ul>
       <dl class="tot" id="tot"></dl>
       <div class="verdict" id="verdict" aria-live="polite"></div>
+      <button class="nutbtn" id="nutBtn" type="button" hidden>영양성분 합계 보기</button>
     </aside>
   </div>
 </div>
@@ -472,6 +480,30 @@ function renderMenu(){
 // ---------- detail dialog (click / Enter on a menu row) ----------
 const DV = {k:2000, p:55, na:2000, s:100, f:15}; // 한국 1일 영양성분 기준치
 const dlvPrice = i => B().dm === 'none' ? null : (i.cid && i.pd == null && B().dm === 'same') ? i.ps : i.pd;
+function showNutrition(){
+  const c = cart().filter(l => itemOf(l.k)); if (!c.length) return;
+  const d = document.getElementById('det'); const K = ['k','p','na','s','f'];
+  const sum = {k:0,p:0,na:0,s:0,f:0}, miss = {k:0,p:0,na:0,s:0,f:0}; let n = 0;
+  const has = v => v !== '' && v != null && isFinite(v);
+  c.forEach(l => { const i = itemOf(l.k); n += l.qty; K.forEach(x => { if (has(i[x])) sum[x] += i[x] * l.qty; else miss[x] += l.qty; }); });
+  document.getElementById('det-t').textContent = '주문 전체 영양성분';
+  document.getElementById('det-s').textContent = `${B().name} · 메뉴 ${n}개 합계`;
+  const row = (label, x, unit, hl) => { const pct = Math.round(sum[x] / DV[x] * 100);
+    return `<tr class="${hl ? 'hl' : ''}"><td>${label}</td><td>${fmt(sum[x])}${unit}${miss[x] ? ' <span class="tag">일부 없음</span>' : ''}</td><td>${pct}%<span class="bar"><i class="${pct >= 50 && x !== 'p' ? 'hi' : ''}" style="width:${Math.min(pct,100)}%"></i></span></td></tr>`; };
+  const cell = (i, x, q, unit) => has(i[x]) ? fmt(i[x] * q) + unit : '—';
+  const items = c.map(l => { const i = itemOf(l.k);
+    return `<tr><td>${esc(i.n)}${l.qty > 1 ? ` ×${l.qty}` : ''}</td><td>${cell(i,'k',l.qty,'')}</td><td>${cell(i,'p',l.qty,'g')}</td><td>${cell(i,'na',l.qty,'')}</td><td>${cell(i,'s',l.qty,'g')}</td><td>${cell(i,'f',l.qty,'g')}</td></tr>`; }).join('');
+  const missN = Math.max(...K.map(x => miss[x]));
+  document.getElementById('det-b').innerHTML = `
+    <table><thead><tr><th>영양성분 (주문 전체)</th><th>합계</th><th>1일 기준치 대비</th></tr></thead><tbody>
+      ${row('열량','k','kcal')}${row('단백질','p','g',true)}${row('나트륨','na','mg')}${row('당류','s','g')}${row('포화지방','f','g')}
+    </tbody></table>
+    <p class="det-sub">메뉴별 <span style="font-weight:400;font-size:12px;color:var(--muted)">· 표가 잘리면 옆으로 밀어 보세요</span></p>
+    <div class="nut-wrap"><table class="nut-items"><thead><tr><th>메뉴</th><th>열량(kcal)</th><th>단백질</th><th>나트륨(mg)</th><th>당류</th><th>포화지방</th></tr></thead><tbody>${items}</tbody></table></div>
+    <p class="det-n">${missN ? '“일부 없음”은 직접 추가하면서 비워 둔 값이라 합계에서 빠진 항목입니다.<br>' : ''}담은 수량만큼 곱해 더한 값입니다. 1일 기준치: 열량 2,000kcal · 단백질 55g · 나트륨 2,000mg · 당류 100g · 포화지방 15g. 각 메뉴 값은 메뉴를 누르면 나오는 상세 영양정보와 같은 자료입니다.</p>`;
+  if (d.showModal) { if (!d.open) d.showModal(); } else d.setAttribute('open', '');
+}
+document.getElementById('nutBtn').onclick = showNutrition;
 function showDetail(i){
   const d = document.getElementById('det');
   document.getElementById('det-t').textContent = i.n;
@@ -598,6 +630,7 @@ function renderSlip(){
   else if (v === null) vd.innerHTML = `<span class="lbl">단백질 20g당 가격</span><span class="val">계산 불가</span><span class="word">—</span><span class="why">${prot < 1 && total > 0 ? '담은 메뉴의 단백질이 1g 미만입니다.' : '가격이 있는 메뉴가 없습니다.'}</span>`;
   else vd.innerHTML = `<span class="lbl">단백질 20g당 가격 · ${MODE[m]}${est ? ' (추정가 포함)' : ''}${po ? ' · 입력 금액' : ''}</span><span class="val">${Math.round(v).toLocaleString('ko-KR')}<small>원</small></span><span class="word">${WORD[t]}</span>
     <span class="why">${rankText(v)}</span>`;
+  document.getElementById('nutBtn').hidden = !c.length;
   document.getElementById('b1').textContent = c.length ? `${MODE[m]} ${won(total)} · 단백질 ${fmt(prot)}g` : '담은 메뉴 없음';
   const b2 = document.getElementById('b2'); b2.className = 'b2 ' + t; b2.textContent = c.length && v !== null ? WORD[t] + ' · 20g ' + won(v) : '';
 }
