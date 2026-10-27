@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f5c4c" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111613" media="(prefers-color-scheme: dark)">
+<meta name="description" content="패스트푸드 메뉴의 단백질 20g당 가격과 가성비 등급을 계산하는 앱">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="단백질20g">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>단백질 가성비 계산기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: brand rail on top, menu board (left) + receipt-style order slip (right, sticky); stacks on phones with a bottom summary bar */
+:root{
+  --bg:#eef1ee; --surface:#ffffff; --sunk:#e3e8e4; --ink:#16201b; --muted:#5d6b63; --line:#cfd8d2;
+  --accent:#0f5c4c; --accent-ink:#ffffff; --paper:#fbfcf9;
+  --good:#18794e; --good-bg:#dff3e7; --soso:#a86400; --soso-bg:#fbefd6; --bad:#b4232b; --bad-bg:#fbe1e2;
+  --display:'Black Han Sans','IBM Plex Sans KR',system-ui,sans-serif;
+  --body:'IBM Plex Sans KR',system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111613; --surface:#19201c; --sunk:#222b26; --ink:#e7eee9; --muted:#9aaaa1; --line:#2f3a34;
+  --accent:#5fc7ac; --accent-ink:#0c1512; --paper:#1d2520;
+  --good:#5fd39a; --good-bg:#16372a; --soso:#f0b453; --soso-bg:#3a2c12; --bad:#ff7b80; --bad-bg:#3d1a1c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111613; --surface:#19201c; --sunk:#222b26; --ink:#e7eee9; --muted:#9aaaa1; --line:#2f3a34;
+  --accent:#5fc7ac; --accent-ink:#0c1512; --paper:#1d2520;
+  --good:#5fd39a; --good-bg:#16372a; --soso:#f0b453; --soso-bg:#3a2c12; --bad:#ff7b80; --bad-bg:#3d1a1c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 96px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 20px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(26px,4vw,36px);line-height:1.1;margin:0;letter-spacing:.01em;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{margin:4px 0 0;color:var(--muted);font-size:14px}
+.thresh{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 12px}
+.thresh b{font-family:var(--mono);font-weight:600;color:var(--ink)}
+.step{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 8px}
+/* brand rail */
+.brands{display:flex;flex-wrap:wrap;gap:8px}
+.brand{appearance:none;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;
+  padding:8px 14px 8px 10px;font:600 14px var(--body);display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.brand .dot{width:12px;height:12px;border-radius:50%;background:var(--c);flex:none}
+.brand .cnt{font:500 12px var(--mono);color:var(--muted)}
+.brand[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.brand[aria-pressed="true"] .cnt{color:inherit;opacity:.7}
+.brand:focus-visible,button:focus-visible,input:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px}
+/* main grid */
+.main{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;align-items:start}
+@media (max-width:900px){.main{grid-template-columns:minmax(0,1fr)}}
+.board{min-width:0;display:flex;flex-direction:column;gap:10px}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;max-width:100%}
+.tab{appearance:none;border:0;background:var(--sunk);color:var(--ink);border-radius:8px;padding:6px 11px;font:500 13.5px var(--body);white-space:nowrap;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+.search{flex:1 1 180px;min-width:0;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 10px;font:14px var(--body)}
+.sort{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:7px 8px;font:13.5px var(--body)}
+.menu{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.mi{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 14px;align-items:center;padding:10px 12px;border-top:1px solid var(--line)}
+.mi:first-child{border-top:0}
+.mi .nm{font-weight:600;min-width:0}
+.mi .nm small{display:block;font-weight:400;color:var(--muted);font-size:12.5px;font-family:var(--mono)}
+.mi .v{text-align:right;font-family:var(--mono);font-size:13px;white-space:nowrap}
+.mi .v b{display:block;font-size:14px}
+.add{appearance:none;border:1.5px solid var(--accent);color:var(--accent);background:transparent;border-radius:8px;width:38px;height:38px;font:600 20px var(--body);cursor:pointer;line-height:1}
+.add:hover{background:var(--accent);color:var(--accent-ink)}
+.add[data-on="1"]{background:var(--accent);color:var(--accent-ink)}
+.stp{display:inline-flex;align-items:center;gap:6px}
+.stp .add{width:34px;height:34px;font-size:18px}
+.stp .n{min-width:22px;text-align:center;font:600 15px var(--mono);color:var(--ink)}
+.pill{display:inline-block;font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px;vertical-align:1px}
+.pill.good{color:var(--good);background:var(--good-bg)} .pill.soso{color:var(--soso);background:var(--soso-bg)} .pill.bad{color:var(--bad);background:var(--bad-bg)}
+.pill.na{color:var(--muted);background:var(--sunk)}
+.empty{padding:28px 16px;text-align:center;color:var(--muted)}
+.src{font-size:12px;color:var(--muted);margin:2px 2px 0}
+/* order slip */
+.slip{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);background:var(--paper);border:1px solid var(--line);border-radius:4px;
+  box-shadow:0 1px 0 var(--line),0 10px 30px -18px rgba(0,0,0,.35);display:flex;flex-direction:column}
+@media (max-width:900px){.slip{position:static}}
+.slip-h{padding:14px 16px 10px;border-bottom:2px dashed var(--line);display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.slip-h h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0}
+.slip-h .store{font:500 13px var(--mono);color:var(--muted)}
+.clear{appearance:none;border:0;background:none;color:var(--muted);font:500 12.5px var(--body);text-decoration:underline;cursor:pointer;padding:0}
+.lines{list-style:none;margin:0;padding:6px 16px;display:flex;flex-direction:column}
+.ln{padding:10px 0;border-bottom:1px dotted var(--line);display:flex;flex-direction:column;gap:6px}
+.ln:last-child{border-bottom:0}
+.ln-top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.ln-top .n{font-weight:600;min-width:0}
+.ln-top .amt{font:600 14px var(--mono);white-space:nowrap;text-align:right}
+.ln-top .amt s{display:block;color:var(--muted);font-weight:500;font-size:12px}
+.ln-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.qty button{appearance:none;border:0;background:var(--sunk);color:var(--ink);width:28px;height:28px;font:600 15px var(--body);cursor:pointer}
+.qty span{min-width:28px;text-align:center;font:600 13px var(--mono);color:var(--ink)}
+.dc{appearance:none;border:1.5px solid var(--soso);color:var(--soso);background:transparent;border-radius:6px;padding:3px 9px;font:600 12.5px var(--body);cursor:pointer}
+.dc[aria-expanded="true"],.dc.applied{background:var(--soso);color:var(--paper)}
+.dcbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--soso-bg);border-radius:6px;padding:8px}
+.dcbox label{font-size:12.5px;color:var(--ink);font-weight:500}
+.dcbox input{width:110px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:5px 8px;font:600 14px var(--mono)}
+.dcbox .mini{appearance:none;border:0;background:var(--ink);color:var(--bg);border-radius:6px;padding:6px 10px;font:600 12.5px var(--body);cursor:pointer}
+.dcbox .mini.ghost{background:transparent;color:var(--ink);text-decoration:underline;padding:6px 4px}
+.dcbox .err{flex-basis:100%;color:var(--bad);font-size:12px;margin:0}
+.slip-empty{padding:22px 16px;color:var(--muted);font-size:14px}
+.tot{border-top:2px dashed var(--line);padding:12px 16px;display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:14px}
+.tot dt{color:var(--muted)} .tot dd{margin:0;text-align:right;font:600 14px var(--mono)}
+.tot .save dd{color:var(--soso)}
+.verdict{margin:0 12px 12px;border-radius:8px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;align-items:center;gap:2px 12px;background:var(--sunk)}
+.verdict .lbl{font-size:12px;color:var(--muted);letter-spacing:.04em}
+.verdict .val{font:600 24px var(--mono);line-height:1.15}
+.verdict .val small{font-size:13px;font-weight:500;margin-left:2px}
+.verdict .word{grid-row:1 / span 3;grid-column:2;font-family:var(--display);font-size:40px;line-height:1;letter-spacing:.02em}
+.verdict .why{font-size:12.5px;color:var(--muted)}
+.verdict.good{background:var(--good-bg)} .verdict.good .word{color:var(--good)}
+.verdict.soso{background:var(--soso-bg)} .verdict.soso .word{color:var(--soso)}
+.verdict.bad{background:var(--bad-bg)} .verdict.bad .word{color:var(--bad)}
+.verdict.na .word{color:var(--muted);font-size:28px}
+/* phone bottom bar */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--ink);color:var(--bg);
+  padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  display:none;align-items:center;justify-content:space-between;gap:12px}
+@media (max-width:900px){.bar{display:flex}}
+.bar .b1{font:600 14px var(--mono)}
+.bar .b2{font-family:var(--display);font-size:22px}
+.bar a{color:inherit;font-size:13px;text-decoration:underline}
+.bar .b2.good{color:var(--good-bg)} .bar .b2.soso{color:var(--soso-bg)} .bar .b2.bad{color:var(--bad-bg)}
+@media (prefers-reduced-motion:no-preference){.verdict{transition:background .2s}}
+.modebar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:10px}
+.seg{display:inline-flex;border:1.5px solid var(--ink);border-radius:10px;overflow:hidden}
+.seg button{appearance:none;border:0;background:var(--surface);color:var(--ink);padding:7px 16px;font:600 14px var(--body);cursor:pointer}
+.seg button+button{border-left:1.5px solid var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.seg button:disabled{color:var(--muted);cursor:not-allowed;background:var(--sunk)}
+.mnote{font-size:12.5px;color:var(--muted);flex:1 1 260px;min-width:0}
+.mnote b{color:var(--ink);font-weight:600}
+.tag{display:inline-block;font:600 10.5px var(--mono);padding:1px 5px;border-radius:4px;background:var(--sunk);color:var(--muted);vertical-align:1px}
+.mi.off{opacity:.55}
+.add:disabled{border-color:var(--line);color:var(--muted);cursor:not-allowed;background:transparent}
+.ln .warn{color:var(--bad);font-size:12.5px}
+.store .mode{display:inline-block;margin-left:6px;font:600 11px var(--mono);padding:1px 6px;border-radius:4px;background:var(--ink);color:var(--bg)}
+.ghostbtn{appearance:none;border:1.5px dashed var(--accent);color:var(--accent);background:transparent;border-radius:8px;padding:7px 12px;font:600 13.5px var(--body);cursor:pointer;white-space:nowrap}
+.ghostbtn:hover{background:var(--surface)}
+.cform{background:var(--surface);border:1.5px solid var(--accent);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.cform h3{margin:0;font-family:var(--display);font-weight:400;font-size:18px}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.cgrid label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);font-weight:500;min-width:0}
+.cgrid label.wide{grid-column:span 2}
+@media (max-width:420px){.cgrid label.wide{grid-column:auto}}
+.cgrid input,.cgrid select{border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:7px;padding:7px 9px;font:14px var(--body);min-width:0;width:100%}
+.cgrid input[type=number]{font-family:var(--mono)}
+.cgrid .req::after{content:" *";color:var(--bad)}
+.crow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.crow .hint{font-size:12px;color:var(--muted);flex:1 1 220px}
+.btn{appearance:none;border:0;background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:8px 14px;font:600 14px var(--body);cursor:pointer}
+.btn.sub{background:var(--sunk);color:var(--ink)}
+.cerr{color:var(--bad);font-size:13px;margin:0}
+.mine{display:inline-block;font:600 10.5px var(--mono);padding:1px 5px;border-radius:4px;background:var(--accent);color:var(--accent-ink);vertical-align:1px}
+.mact{display:flex;gap:10px;margin-top:3px}
+.mact button{appearance:none;border:0;background:none;padding:0;color:var(--accent);font:600 12px var(--body);text-decoration:underline;cursor:pointer}
+.mact button.del{color:var(--bad)}
+.basis{font-size:12px;color:var(--muted);margin:2px 0 0;max-width:62ch}
+.mi{cursor:pointer;user-select:none;-webkit-user-select:none}
+.mi:hover{background:var(--sunk)}
+.mi:focus-visible{outline:2.5px solid var(--accent);outline-offset:-2px}
+.dhint{font-size:12px;color:var(--muted);margin:0}
+dialog.det{border:1px solid var(--line);border-radius:14px;padding:0;background:var(--paper);color:var(--ink);width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 48px);overflow:auto;box-shadow:0 24px 60px -20px rgba(0,0,0,.45)}
+dialog.det::backdrop{background:rgba(10,16,13,.45)}
+.det-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 18px 10px;border-bottom:2px dashed var(--line)}
+.det-h h3{margin:0;font-family:var(--display);font-weight:400;font-size:22px;line-height:1.2;text-wrap:balance}
+.det-h p{margin:3px 0 0;font-size:12.5px;color:var(--muted)}
+.det-x{appearance:none;border:0;background:var(--sunk);color:var(--ink);border-radius:8px;width:34px;height:34px;font:600 18px var(--body);cursor:pointer;flex:none}
+.det-b{padding:12px 18px 18px;display:flex;flex-direction:column;gap:14px}
+.det table{width:100%;border-collapse:collapse;font-size:14px}
+.det th,.det td{padding:7px 4px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+.det th:first-child,.det td:first-child{text-align:left}
+.det thead th{font-size:11.5px;color:var(--muted);font-weight:600;letter-spacing:.04em}
+.det td{font-family:var(--mono);font-size:13.5px}
+.det td:first-child{font-family:var(--body);font-weight:500}
+.det tr.hl td{font-weight:700}
+.det .bar{display:block;height:4px;border-radius:2px;background:var(--sunk);margin-top:3px;position:static}
+.det .bar i{display:block;height:100%;border-radius:2px;background:var(--accent)}
+.det .bar i.hi{background:var(--bad)}
+.det-p{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:420px){.det-p{grid-template-columns:1fr}}
+.det-p div{background:var(--sunk);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.det-p .k{font-size:12px;color:var(--muted)}
+.det-p .pv{font:600 17px var(--mono)}
+.det-p .r{font-size:12px;color:var(--muted)}
+.det-n{font-size:12px;color:var(--muted);margin:0;line-height:1.6}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>단백질 <em>20g</em>당 얼마?</h1>
+      <p class="lede">매장과 주문 방식(매장·배달)을 고르고 먹을 메뉴를 담으면, 단백질 20g을 얻는 데 드는 돈과 가성비 등급을 보여줍니다.</p>
+    </div>
+    <div><div class="thresh" id="thresh"></div><p class="basis" id="basis"></p></div>
+  </header>
+
+  <section aria-labelledby="s1">
+    <p class="step" id="s1">1 · 매장 선택</p>
+    <div class="brands" id="brands" role="group" aria-label="매장"></div>
+    <div class="modebar">
+      <div class="seg" role="group" aria-label="주문 방식"><button type="button" id="m-store">매장</button><button type="button" id="m-dlv">배달</button></div>
+      <p class="mnote" id="mnote"></p>
+    </div>
+  </section>
+
+  <div class="main">
+    <section class="board" aria-labelledby="s2">
+      <p class="step" id="s2">2 · 메뉴 담기</p>
+      <div class="tools">
+        <input id="q" class="search" type="search" placeholder="메뉴 이름 검색" aria-label="메뉴 검색">
+        <select id="sort" class="sort" aria-label="정렬">
+          <option value="value">가성비 좋은 순</option>
+          <option value="price">가격 낮은 순</option>
+          <option value="protein">단백질 많은 순</option>
+          <option value="menu">메뉴판 순서</option>
+        </select>
+        <button id="addOpen" class="ghostbtn" type="button">+ 메뉴 직접 추가</button>
+      </div>
+      <form id="cform" class="cform" hidden novalidate>
+        <h3 id="cf-title">메뉴 직접 추가</h3>
+        <div class="cgrid">
+          <label>매장<select id="cf-brand"></select></label>
+          <label id="cf-store-w" hidden><span class="req">매장 이름</span><input id="cf-store" maxlength="30" placeholder="예: 노브랜드버거"></label>
+          <label>분류<input id="cf-cat" maxlength="20" list="cf-cats" placeholder="직접 추가"><datalist id="cf-cats"></datalist></label>
+          <label class="wide"><span class="req">메뉴 이름</span><input id="cf-name" maxlength="40" placeholder="예: 리아 불고기 더블 레드"></label>
+          <label><span class="req">매장가 (원)</span><input id="cf-ps" type="number" inputmode="numeric" min="0" step="100"></label>
+          <label>배달가 (원)<input id="cf-pd" type="number" inputmode="numeric" min="0" step="100" placeholder="모르면 비워 두기"></label>
+          <label><span class="req">단백질 (g)</span><input id="cf-p" type="number" inputmode="decimal" min="0" step="0.1"></label>
+          <label>열량 (kcal)<input id="cf-k" type="number" inputmode="numeric" min="0"></label>
+          <label>나트륨 (mg)<input id="cf-na" type="number" inputmode="numeric" min="0"></label>
+          <label>당류 (g)<input id="cf-s" type="number" inputmode="decimal" min="0" step="0.1"></label>
+          <label>포화지방 (g)<input id="cf-f" type="number" inputmode="decimal" min="0" step="0.1"></label>
+          <label>중량 (g)<input id="cf-w" type="number" inputmode="numeric" min="0"></label>
+        </div>
+        <p class="cerr" id="cf-err" hidden></p>
+        <div class="crow"><button class="btn" type="submit" id="cf-save">저장</button><button class="btn sub" type="button" id="cf-cancel">취소</button>
+          <span class="hint">* 표시는 필수입니다. 매장가나 배달가 중 하나는 꼭 넣어 주세요. 단백질은 포장지·공식 영양정보의 1개 기준 값을 넣으세요.</span></div>
+      </form>
+      <div class="tabs" id="tabs" role="tablist" aria-label="카테고리"></div>
+      <ul class="menu" id="menu"></ul>
+      <p class="dhint">메뉴를 누르면 상세 영양정보가 열립니다. 담기는 오른쪽 <b>+</b> 버튼으로 합니다.</p>
+      <p class="src" id="cstat"></p>
+      <div class="crow" id="bk"><button class="btn sub" type="button" id="exp">내 메뉴 내보내기</button><button class="btn sub" type="button" id="impb">가져오기</button><input type="file" id="imp" accept=".json,application/json" hidden><span class="hint" id="bkmsg"></span></div>
+      <p class="src" id="src"></p>
+      <p class="src">앱 버전 2026.10.27</p>
+    </section>
+
+    <aside class="slip" id="slip" aria-labelledby="s3">
+      <div class="slip-h">
+        <div><p class="step" id="s3" style="margin:0 0 2px">3 · 최종 선택</p><h2>주문서</h2></div>
+        <div style="text-align:right"><div class="store" id="store"></div><button class="clear" id="clear" type="button">비우기</button></div>
+      </div>
+      <ul class="lines" id="lines"></ul>
+      <dl class="tot" id="tot"></dl>
+      <div class="verdict" id="verdict" aria-live="polite"></div>
+    </aside>
+  </div>
+</div>
+
+<div class="bar" id="bar" aria-hidden="true"><div><div class="b1" id="b1"></div><a href="#slip">주문서 보기</a></div><div class="b2" id="b2"></div></div>
+
+<dialog class="det" id="det" aria-labelledby="det-t">
+  <div class="det-h"><div><h3 id="det-t"></h3><p id="det-s"></p></div><button class="det-x" type="button" id="det-x" aria-label="닫기">×</button></div>
+  <div class="det-b" id="det-b"></div>
+</dialog>
+
+<script>
+const DATA = [{"id":"lotteria","name":"롯데리아","color":"#d6001c","dm":"official","snote":"매장가: 롯데잇츠 공식 상품 페이지","dnote":"배달가: 롯데잇츠 배달 주문 화면(서울 5개 매장 동일가 확인, 2026.10.27)","items":[{"c":"버거","n":"리아 불고기 레드","w":238,"k":550,"p":22,"na":1110,"s":20,"f":12,"fl":"","ps":6200,"pd":null,"nd":"배달 메뉴에 없음"},{"c":"버거","n":"리아 불고기 더블 레드","w":280,"k":731,"p":38,"na":1570,"s":16,"f":23,"fl":"","ps":8000,"pd":null,"nd":"배달 메뉴에 없음"},{"c":"버거","n":"리아 두툼새우","w":263,"k":549,"p":18,"na":1300,"s":11,"f":3.2,"fl":"","ps":7900,"pd":8800},{"c":"버거","n":"리아 두툼새우 스파이시토마토","w":263,"k":516,"p":18,"na":1310,"s":10,"f":4.0,"fl":"","ps":7900,"pd":null,"nd":"배달 메뉴에 없음"},{"c":"버거","n":"하와이안 모짜렐라버거","w":290,"k":773,"p":26,"na":1146,"s":14,"f":18,"fl":"","ps":8800,"pd":null,"nd":"배달 메뉴에 없음"},{"c":"버거","n":"통다리 크리스피치킨버거(그릭랜치)","w":231,"k":618,"p":25,"na":1050,"s":8,"f":5.0,"fl":"","ps":6900,"pd":7800},{"c":"버거","n":"통다리 크리스피치킨버거(파이어핫)","w":231,"k":594,"p":25,"na":1040,"s":10,"f":4.4,"fl":"","ps":6900,"pd":7800},{"c":"버거","n":"나폴리 모짜렐라버거 토마토바질","w":240,"k":733,"p":27,"na":1080,"s":10,"f":18,"fl":"","ps":9300,"pd":10200},{"c":"버거","n":"나폴리 모짜렐라버거 발사믹바질","w":250,"k":733,"p":27,"na":1040,"s":10,"f":18,"fl":"","ps":9300,"pd":10200},{"c":"버거","n":"전주 비빔라이스 버거","w":285,"k":574,"p":17,"na":1450,"s":9,"f":8,"fl":"","ps":7500,"pd":8400},{"c":"버거","n":"리아 새우 베이컨","w":211,"k":519,"p":18,"na":960,"s":6,"f":5,"fl":"","ps":6200,"pd":7100},{"c":"버거","n":"리아 불고기 베이컨","w":224,"k":508,"p":23,"na":940,"s":11,"f":13,"fl":"","ps":6200,"pd":7100},{"c":"버거","n":"더블 클래식치즈버거(버터번)","w":213,"k":731,"p":25,"na":1110,"s":6,"f":25,"fl":"","ps":7400,"pd":8300},{"c":"버거","n":"더블 데리버거","w":170,"k":446,"p":19,"na":740,"s":10,"f":7,"fl":"","ps":5200,"pd":6100},{"c":"버거","n":"더블 한우불고기버거","w":352,"k":802,"p":39,"na":1150,"s":18,"f":20,"fl":"","ps":13200,"pd":14100},{"c":"버거","n":"모짜렐라 인 더 버거 베이컨","w":223,"k":696,"p":30,"na":1000,"s":6,"f":16,"fl":"","ps":8200,"pd":9100},{"c":"버거","n":"더블 치킨버거","w":205,"k":478,"p":24,"na":950,"s":11,"f":5,"fl":"","ps":6000,"pd":6900},{"c":"버거","n":"더블엑스투버거","w":228,"k":716,"p":25,"na":1070,"s":7,"f":25,"fl":"","ps":7400,"pd":8300},{"c":"버거","n":"리아 불고기 더블(빅불)","w":274,"k":721,"p":38,"na":1480,"s":12,"f":24,"fl":"","ps":7700,"pd":8600},{"c":"버거","n":"미라클버거","w":181,"k":382,"p":15,"na":600,"s":7,"f":4.6,"fl":"","ps":5900,"pd":6800},{"c":"버거","n":"더블 미라클버거","w":245,"k":551,"p":25,"na":920,"s":10,"f":7,"fl":"","ps":7400,"pd":8300},{"c":"버거","n":"핫크리스피치킨버거","w":190,"k":503,"p":22,"na":930,"s":5,"f":7,"fl":"","ps":6400,"pd":7300},{"c":"버거","n":"리아 사각새우 더블","w":208,"k":556,"p":17,"na":960,"s":7,"f":5.0,"fl":"","ps":6200,"pd":7100},{"c":"버거","n":"클래식치즈버거(버터번)","w":146,"k":492,"p":16,"na":770,"s":5,"f":14,"fl":"","ps":5700,"pd":6600},{"c":"버거","n":"리아 불고기","w":192,"k":462,"p":21,"na":880,"s":11,"f":11,"fl":"","ps":5100,"pd":6000},{"c":"버거","n":"리아 새우","w":179,"k":492,"p":15,"na":810,"s":7,"f":4.7,"fl":"","ps":5100,"pd":6000},{"c":"버거","n":"치킨버거","w":141,"k":355,"p":15,"na":620,"s":8,"f":3.8,"fl":"","ps":4500,"pd":5400},{"c":"버거","n":"데리버거","w":134,"k":348,"p":12,"na":590,"s":10,"f":4.9,"fl":"","ps":3800,"pd":4700},{"c":"사이드(디저트)","n":"디지게 매운 돈까스(디진다맛)","w":112,"k":280,"p":15,"na":520,"s":13,"f":2.1,"fl":"","ps":3500,"pd":4400},{"c":"사이드(디저트)","n":"디지게 매운 돈까스(양념맛)","w":112,"k":290,"p":15,"na":670,"s":15,"f":2,"fl":"","ps":3500,"pd":null,"nd":"배달 메뉴에 없음"},{"c":"사이드(디저트)","n":"포테이토","w":98,"k":284,"p":3,"na":500,"s":2,"f":2.8,"fl":"","ps":2100,"pd":3000},{"c":"사이드(디저트)","n":"포테이토(L)","w":148,"k":420,"p":5,"na":800,"s":5,"f":4.1,"fl":"","ps":2600,"pd":3500},{"c":"사이드(디저트)","n":"치즈스틱","w":49,"k":158,"p":8,"na":270,"s":0.5,"f":3.7,"fl":"","ps":2900,"pd":3800},{"c":"사이드(디저트)","n":"롱치즈스틱","w":49,"k":158,"p":8,"na":230,"s":0,"f":4,"fl":"","ps":2500,"pd":3400},{"c":"사이드(디저트)","n":"통오징어링","w":97,"k":166,"p":8,"na":420,"s":8,"f":0.5,"fl":"","ps":2900,"pd":3800},{"c":"사이드(디저트)","n":"지파이 하바네로(L)","w":160,"k":566,"p":26,"na":1370,"s":1,"f":4.2,"fl":"","ps":5800,"pd":null,"nd":"배달 메뉴에 없음"},{"c":"사이드(디저트)","n":"지파이 고소한맛(S)","w":128,"k":397,"p":18,"na":620,"s":0.5,"f":6,"fl":"","ps":4700,"pd":5600},{"c":"사이드(디저트)","n":"코울슬로","w":100,"k":112,"p":0.5,"na":130,"s":12,"f":1.0,"fl":"","ps":2000,"pd":2900},{"c":"치킨","n":"화이어윙","w":85,"k":178,"p":9,"na":270,"s":0,"f":2.5,"fl":"","ps":3400,"pd":4300,"nd":"배달 메뉴의 화이어윙 2조각 가격"},{"c":"치킨","n":"치킨다리 1조각","w":82,"k":151,"p":11,"na":330,"s":0,"f":1.8,"fl":"","ps":3100,"pd":4000},{"c":"음료","n":"콜라","w":420,"k":128,"p":0,"na":15,"s":31,"f":0,"fl":"","ps":2100,"pd":2900},{"c":"음료","n":"사이다","w":420,"k":133,"p":0,"na":5,"s":31,"f":0,"fl":"","ps":2100,"pd":2900},{"c":"음료","n":"제로슈거콜라","w":420,"k":0,"p":0,"na":55,"s":0,"f":0,"fl":"","ps":2100,"pd":2900},{"c":"음료","n":"말차라떼","w":380,"k":282,"p":8,"na":120,"s":37,"f":6,"fl":"","ps":3600,"pd":4400},{"c":"음료","n":"아이스티","w":380,"k":191,"p":0,"na":0,"s":47,"f":0,"fl":"","ps":2500,"pd":3300},{"c":"음료","n":"레몬에이드","w":380,"k":180,"p":0,"na":10,"s":41,"f":0,"fl":"","ps":2900,"pd":3700},{"c":"음료","n":"아메리카노","w":290,"k":8,"p":0,"na":5,"s":0,"f":0,"fl":"","ps":2600,"pd":3400},{"c":"음료","n":"아이스 아메리카노","w":340,"k":5,"p":0,"na":0,"s":0,"f":0,"fl":"","ps":2600,"pd":3400},{"c":"음료","n":"카페라떼(살균우유)","w":300,"k":145,"p":7,"na":80,"s":7,"f":4.5,"fl":"","ps":3400,"pd":4200},{"c":"음료","n":"아이스카페라떼(살균우유)","w":325,"k":60,"p":3,"na":30,"s":2,"f":1.7,"fl":"","ps":3400,"pd":4200},{"c":"음료","n":"오렌지주스(PET)","w":400,"k":175,"p":2,"na":25,"s":41,"f":0,"fl":"","ps":2600,"pd":3400},{"c":"음료","n":"핫초코","w":215,"k":142,"p":2,"na":88,"s":17,"f":4,"fl":"","ps":2500,"pd":null,"nd":"배달 메뉴에 없음"},{"c":"아이스크림·빙수","n":"팥빙수(보냉백 포함)","w":511,"k":601,"p":10,"na":140,"s":99,"f":3.0,"fl":"","ps":6600,"pd":null,"nd":"배달 메뉴에 없음"},{"c":"아이스크림·빙수","n":"팥빙수","w":511,"k":601,"p":10,"na":140,"s":99,"f":3.0,"fl":"","ps":6100,"pd":null,"nd":"배달 메뉴에 없음"},{"c":"아이스크림·빙수","n":"말차빙수(보냉백 포함)","w":440,"k":634,"p":9,"na":220,"s":82,"f":3.0,"fl":"","ps":6600,"pd":null,"nd":"배달 메뉴에 없음"},{"c":"아이스크림·빙수","n":"말차빙수","w":440,"k":634,"p":9,"na":220,"s":82,"f":3.0,"fl":"","ps":6100,"pd":null,"nd":"배달 메뉴에 없음"},{"c":"아이스크림·빙수","n":"토네이도 말차쿠키","w":190,"k":341,"p":5,"na":160,"s":40,"f":7,"fl":"","ps":3500,"pd":4400},{"c":"아이스크림·빙수","n":"토네이도 망고젤리","w":190,"k":280,"p":4,"na":75,"s":40,"f":6,"fl":"","ps":3300,"pd":4200},{"c":"아이스크림·빙수","n":"토네이도 초코쿠키","w":175,"k":300,"p":5,"na":160,"s":32,"f":7,"fl":"","ps":3300,"pd":4200},{"c":"아이스크림·빙수","n":"토네이도 스트로베리","w":177,"k":263,"p":4,"na":65,"s":36,"f":6,"fl":"","ps":3300,"pd":4200},{"c":"아이스크림·빙수","n":"토네이도 더블초코","w":190,"k":338,"p":5,"na":160,"s":39,"f":7,"fl":"","ps":3300,"pd":4200},{"c":"아이스크림·빙수","n":"선데아이스크림 플레인","w":150,"k":214,"p":3,"na":55,"s":26,"f":5,"fl":"","ps":2200,"pd":null,"nd":"배달 메뉴에 없음"},{"c":"아이스크림·빙수","n":"선데아이스크림 스트로베리","w":165,"k":242,"p":3,"na":60,"s":33,"f":5,"fl":"","ps":2400,"pd":null,"nd":"배달 메뉴에 없음"},{"c":"아이스크림·빙수","n":"선데 허쉬초코","w":170,"k":265,"p":4,"na":65,"s":36,"f":5,"fl":"","ps":2400,"pd":null,"nd":"배달 메뉴에 없음"},{"c":"아이스크림·빙수","n":"소프트콘","w":90,"k":141,"p":2,"na":40,"s":15,"f":3.1,"fl":"","ps":1400,"pd":null,"nd":"배달 메뉴에 없음"}]},{"id":"mc","name":"맥도날드","color":"#ffbc0d","dm":"rule","snote":"매장가: 나무위키 정리 († 해피스낵 할인가)","dnote":"배달가 추정: 매장가 + 700원 (맥딜리버리 단품 차액 보도·위키 기준, 앱 전용이라 직접 확인 불가)","items":[{"c":"버거","n":"빅아치™","w":370,"k":1036,"p":56,"na":1661,"s":12,"f":26,"fl":"","ps":12400,"pd":13100,"nd":"추정"},{"c":"버거","n":"더블 맥스파이시® 상하이 버거","w":362,"k":867,"p":38,"na":1640,"s":10,"f":6,"fl":"","ps":9300,"pd":10000,"nd":"추정"},{"c":"버거","n":"더블 쿼터파운더® 치즈","w":275,"k":770,"p":50,"na":1151,"s":10,"f":20,"fl":"","ps":7700,"pd":8400,"nd":"추정"},{"c":"버거","n":"맥크리스피™ 치킨 디럭스","w":275,"k":578,"p":23,"na":1297,"s":13,"f":4.7,"fl":"","ps":6800,"pd":7500,"nd":"추정"},{"c":"버거","n":"1955® 버거","w":264,"k":572,"p":29,"na":930,"s":15,"f":10,"fl":"","ps":6700,"pd":7400,"nd":"추정"},{"c":"버거","n":"슈비버거","w":269,"k":573,"p":22,"na":951,"s":15,"f":6,"fl":"","ps":6200,"pd":6900,"nd":"추정"},{"c":"버거","n":"트리플 치즈버거","w":216,"k":640,"p":38,"na":1152,"s":8,"f":18,"fl":"","ps":6100,"pd":6800,"nd":"추정"},{"c":"버거","n":"쿼터파운더® 치즈","w":198,"k":536,"p":31,"na":966,"s":10,"f":13,"fl":"","ps":5900,"pd":6600,"nd":"추정"},{"c":"버거","n":"맥스파이시® 상하이버거","w":246,"k":528,"p":22,"na":952,"s":9,"f":3.2,"fl":"","ps":5900,"pd":6600,"nd":"추정"},{"c":"버거","n":"맥크리스피™ 치킨 클래식","w":209,"k":567,"p":23,"na":1295,"s":11,"f":4.7,"fl":"","ps":5900,"pd":6600,"nd":"추정"},{"c":"버거","n":"베이컨 토마토 디럭스","w":247,"k":570,"p":29,"na":933,"s":14,"f":11,"fl":"","ps":5800,"pd":6500,"nd":"추정"},{"c":"버거","n":"빅맥®","w":223,"k":582,"p":27,"na":902,"s":8,"f":11,"fl":"","ps":5700,"pd":6400,"nd":"추정"},{"c":"버거","n":"맥치킨® 모짜렐라","w":293,"k":735,"p":29,"na":1807,"s":18,"f":7,"fl":"","ps":5000,"pd":5700,"nd":"추정"},{"c":"버거","n":"더블 치즈버거","w":167,"k":479,"p":27,"na":896,"s":8,"f":12,"fl":"","ps":5000,"pd":5700,"nd":"추정"},{"c":"버거","n":"더블 불고기버거","w":237,"k":635,"p":26,"na":997,"s":15,"f":13,"fl":"","ps":4700,"pd":5400,"nd":"추정"},{"c":"버거","n":"슈슈버거","w":225,"k":431,"p":13,"na":758,"s":13,"f":1.9,"fl":"","ps":4700,"pd":5400,"nd":"추정"},{"c":"버거","n":"토마토 치즈 비프 버거","w":200,"k":402,"p":18,"na":682,"s":11,"f":7,"fl":"","ps":4000,"pd":4700,"nd":"추정"},{"c":"버거","n":"불고기버거","w":167,"k":408,"p":14,"na":670,"s":14,"f":6,"fl":"","ps":3800,"pd":4500,"nd":"추정"},{"c":"버거","n":"맥치킨®","w":206,"k":515,"p":19,"na":1148,"s":7,"f":3.6,"fl":"","ps":3500,"pd":4200,"nd":"추정"},{"c":"버거","n":"치즈버거","w":115,"k":318,"p":16,"na":612,"s":7,"f":6,"fl":"","ps":3200,"pd":3900,"nd":"추정"},{"c":"버거","n":"햄버거","w":101,"k":266,"p":13,"na":450,"s":7,"f":3.5,"fl":"","ps":2800,"pd":3500,"nd":"추정"},{"c":"맥모닝","n":"에그 맥머핀","w":140,"k":306,"p":19,"na":712,"s":3,"f":5,"fl":"","ps":3000,"pd":3700,"nd":"추정"},{"c":"맥모닝","n":"베이컨 에그 맥머핀","w":137,"k":327,"p":19,"na":687,"s":3,"f":6,"fl":"","ps":3600,"pd":4300,"nd":"추정"},{"c":"맥모닝","n":"베이컨 토마토 에그 머핀","w":196,"k":341,"p":17,"na":666,"s":5,"f":3.6,"fl":"","ps":4200,"pd":4900,"nd":"추정"},{"c":"맥모닝","n":"소시지 에그 맥머핀","w":168,"k":432,"p":23,"na":835,"s":3,"f":9,"fl":"","ps":4000,"pd":4700,"nd":"추정"},{"c":"맥모닝","n":"디럭스 브렉퍼스트","w":312,"k":768,"p":29,"na":1365,"s":11,"f":9,"fl":"","ps":5200,"pd":5900,"nd":"추정"},{"c":"맥모닝","n":"핫케익 2조각","w":100,"k":223,"p":6,"na":342,"s":8,"f":1.1,"fl":"","ps":3000,"pd":3700,"nd":"추정"},{"c":"맥모닝","n":"핫케익 3조각","w":150,"k":335,"p":9,"na":513,"s":12,"f":1.7,"fl":"","ps":3500,"pd":4200,"nd":"추정"},{"c":"맥모닝","n":"치킨 치즈 머핀","w":178,"k":498,"p":23,"na":1277,"s":3,"f":6,"fl":"","ps":4000,"pd":4700,"nd":"추정"},{"c":"맥모닝","n":"그릴드 치킨 모닝 버거","w":164,"k":358,"p":19,"na":913,"s":9,"f":4.4,"fl":"","ps":4400,"pd":5100,"nd":"추정"},{"c":"맥모닝","n":"더블 그릴드 치킨 모닝 버거","w":209,"k":414,"p":30,"na":1262,"s":9,"f":4.6,"fl":"","ps":6400,"pd":7100,"nd":"추정"},{"c":"맥모닝","n":"해쉬 브라운","w":57,"k":162,"p":2,"na":345,"s":0,"f":0.8,"fl":"","ps":1800,"pd":2500,"nd":"추정"},{"c":"사이드","n":"맥너겟® 4조각","w":64,"k":163,"p":10,"na":369,"s":0,"f":1.1,"fl":"†","ps":2000,"pd":2700,"nd":"추정"},{"c":"사이드","n":"맥너겟® 6조각","w":96,"k":244,"p":15,"na":553,"s":0,"f":1.6,"fl":"","ps":4100,"pd":4800,"nd":"추정"},{"c":"사이드","n":"맥스파이시® 치킨텐더 2조각","w":79,"k":190,"p":14,"na":763,"s":0,"f":1.2,"fl":"","ps":2700,"pd":3400,"nd":"추정"},{"c":"사이드","n":"맥윙 2조각","w":84,"k":228,"p":14,"na":602,"s":0,"f":3.0,"fl":"","ps":3700,"pd":4400,"nd":"추정"},{"c":"사이드","n":"맥윙 4조각","w":168,"k":455,"p":28,"na":1204,"s":1,"f":6,"fl":"","ps":6900,"pd":7600,"nd":"추정"},{"c":"사이드","n":"맥윙 8조각","w":336,"k":910,"p":56,"na":2408,"s":1,"f":12,"fl":"","ps":13000,"pd":13700,"nd":"추정"},{"c":"사이드","n":"상하이 치킨 스낵랩","w":112,"k":300,"p":11,"na":823,"s":3,"f":3.9,"fl":"","ps":3500,"pd":4200,"nd":"추정"},{"c":"사이드","n":"치킨 모짜렐라 스낵랩","w":131,"k":347,"p":14,"na":923,"s":7,"f":4.9,"fl":"†","ps":3000,"pd":3700,"nd":"추정"},{"c":"사이드","n":"골든 모짜렐라 치즈스틱 2조각","w":47,"k":165,"p":8,"na":288,"s":1,"f":4.2,"fl":"","ps":2800,"pd":3500,"nd":"추정"},{"c":"사이드","n":"골든 모짜렐라 치즈스틱 4조각","w":94,"k":330,"p":16,"na":577,"s":2,"f":8.4,"fl":"","ps":4500,"pd":5200,"nd":"추정"},{"c":"사이드","n":"후렌치 후라이 스몰","w":74,"k":210,"p":4,"na":183,"s":0,"f":0.7,"fl":"","ps":1500,"pd":2200,"nd":"추정"},{"c":"사이드","n":"후렌치 후라이 미디엄","w":114,"k":324,"p":5,"na":282,"s":0,"f":1,"fl":"","ps":2500,"pd":3200,"nd":"추정"},{"c":"사이드","n":"후렌치 후라이 라지","w":140,"k":397,"p":7,"na":346,"s":0,"f":1.3,"fl":"","ps":3200,"pd":3900,"nd":"추정"},{"c":"사이드","n":"코울슬로","w":100,"k":179,"p":1,"na":307,"s":18,"f":1,"fl":"","ps":1900,"pd":2600,"nd":"추정"},{"c":"디저트","n":"오레오 맥플러리","w":168,"k":334,"p":6,"na":179,"s":36,"f":6,"fl":"","ps":3600,"pd":4300,"nd":"추정"},{"c":"디저트","n":"딸기 오레오 맥플러리","w":174,"k":305,"p":5,"na":138,"s":38,"f":4.7,"fl":"","ps":3600,"pd":4300,"nd":"추정"},{"c":"디저트","n":"초코 오레오 맥플러리","w":189,"k":390,"p":7,"na":218,"s":45,"f":8,"fl":"","ps":3600,"pd":4300,"nd":"추정"},{"c":"디저트","n":"베리 스트로베리 맥플러리","w":168,"k":327,"p":5,"na":228,"s":38,"f":6,"fl":"","ps":3600,"pd":4300,"nd":"추정"},{"c":"디저트","n":"아이스크림콘","w":90,"k":146,"p":3,"na":67,"s":15,"f":2.5,"fl":"","ps":1500,"pd":2200,"nd":"추정"},{"c":"디저트","n":"스트로베리콘","w":90,"k":142,"p":3,"na":96,"s":16,"f":2.5,"fl":"","ps":1900,"pd":2600,"nd":"추정"},{"c":"디저트","n":"초코 선데이 아이스크림","w":175,"k":323,"p":6,"na":170,"s":39,"f":8,"fl":"","ps":2400,"pd":3100,"nd":"추정"},{"c":"디저트","n":"딸기 선데이 아이스크림","w":179,"k":277,"p":5,"na":96,"s":41,"f":3.9,"fl":"","ps":2400,"pd":3100,"nd":"추정"},{"c":"디저트","n":"바닐라 선데이 아이스크림","w":140,"k":201,"p":4,"na":83,"s":24,"f":3.9,"fl":"","ps":2200,"pd":2900,"nd":"추정"},{"c":"디저트","n":"애플 파이","w":82,"k":236,"p":3,"na":199,"s":9,"f":2.9,"fl":"","ps":1500,"pd":2200,"nd":"추정"},{"c":"맥카페&음료","n":"카페라떼 M","w":330,"k":149,"p":8,"na":79,"s":10,"f":4.6,"fl":"","ps":3400,"pd":4100,"nd":"추정"},{"c":"맥카페&음료","n":"카페라떼 L","w":420,"k":194,"p":10,"na":105,"s":14,"f":6,"fl":"","ps":3800,"pd":4500,"nd":"추정"},{"c":"맥카페&음료","n":"아이스 카페라떼 M","w":400,"k":109,"p":6,"na":50,"s":7,"f":3.2,"fl":"","ps":3400,"pd":4100,"nd":"추정"},{"c":"맥카페&음료","n":"아이스 카페라떼 L","w":600,"k":134,"p":6,"na":63,"s":8,"f":3.9,"fl":"","ps":3800,"pd":4500,"nd":"추정"},{"c":"맥카페&음료","n":"카푸치노 M","w":330,"k":93,"p":5,"na":49,"s":6,"f":2.9,"fl":"","ps":3400,"pd":4100,"nd":"추정"},{"c":"맥카페&음료","n":"카푸치노 L","w":420,"k":120,"p":7,"na":62,"s":8,"f":3.5,"fl":"","ps":3800,"pd":4500,"nd":"추정"},{"c":"맥카페&음료","n":"바닐라 라떼 M","w":330,"k":227,"p":8,"na":79,"s":28,"f":4.6,"fl":"","ps":3900,"pd":4600,"nd":"추정"},{"c":"맥카페&음료","n":"바닐라 라떼 L","w":420,"k":323,"p":10,"na":105,"s":45,"f":6,"fl":"","ps":4300,"pd":5000,"nd":"추정"},{"c":"맥카페&음료","n":"아이스 바닐라 라떼 M","w":400,"k":186,"p":6,"na":50,"s":25,"f":3.2,"fl":"","ps":3900,"pd":4600,"nd":"추정"},{"c":"맥카페&음료","n":"아이스 바닐라 라떼 L","w":600,"k":263,"p":6,"na":63,"s":39,"f":3.9,"fl":"","ps":4300,"pd":5000,"nd":"추정"},{"c":"맥카페&음료","n":"디카페인 카페라떼 M","w":330,"k":150,"p":8,"na":85,"s":10,"f":4.4,"fl":"","ps":3600,"pd":4300,"nd":"추정"},{"c":"맥카페&음료","n":"디카페인 카페라떼 L","w":420,"k":190,"p":10,"na":107,"s":13,"f":6,"fl":"","ps":4000,"pd":4700,"nd":"추정"},{"c":"맥카페&음료","n":"디카페인 아이스 카페라떼 M","w":400,"k":114,"p":6,"na":54,"s":7,"f":3.2,"fl":"","ps":3500,"pd":4200,"nd":"추정"},{"c":"맥카페&음료","n":"디카페인 아이스 카페라떼 L","w":600,"k":133,"p":7,"na":65,"s":8,"f":3.9,"fl":"","ps":4000,"pd":4700,"nd":"추정"},{"c":"맥카페&음료","n":"디카페인 카푸치노 M","w":330,"k":89,"p":5,"na":49,"s":6,"f":2.5,"fl":"","ps":3600,"pd":4300,"nd":"추정"},{"c":"맥카페&음료","n":"디카페인 카푸치노 L","w":420,"k":120,"p":6,"na":65,"s":7,"f":3.5,"fl":"","ps":4000,"pd":4700,"nd":"추정"},{"c":"맥카페&음료","n":"디카페인 바닐라 라떼 M","w":330,"k":227,"p":8,"na":85,"s":29,"f":4.4,"fl":"","ps":4000,"pd":4700,"nd":"추정"},{"c":"맥카페&음료","n":"디카페인 바닐라 라떼 L","w":420,"k":319,"p":10,"na":107,"s":43,"f":6,"fl":"","ps":4500,"pd":5200,"nd":"추정"},{"c":"맥카페&음료","n":"디카페인 아이스 바닐라 라떼 M","w":400,"k":191,"p":6,"na":54,"s":26,"f":3.2,"fl":"","ps":4100,"pd":4800,"nd":"추정"},{"c":"맥카페&음료","n":"디카페인 아이스 바닐라 라떼 L","w":600,"k":263,"p":7,"na":65,"s":39,"f":3.9,"fl":"","ps":4500,"pd":5200,"nd":"추정"},{"c":"맥카페&음료","n":"딸기 쉐이크 M","w":425,"k":367,"p":9,"na":180,"s":56,"f":5,"fl":"","ps":2800,"pd":3500,"nd":"추정"},{"c":"맥카페&음료","n":"초코 쉐이크 M","w":425,"k":375,"p":9,"na":236,"s":55,"f":6,"fl":"","ps":2800,"pd":3500,"nd":"추정"},{"c":"맥카페&음료","n":"바닐라 쉐이크 M","w":425,"k":366,"p":9,"na":206,"s":55,"f":5,"fl":"†","ps":2500,"pd":3200,"nd":"추정"},{"c":"맥카페&음료","n":"아메리카노 M","w":330,"k":12,"p":1,"na":0,"s":0,"f":0,"fl":"","ps":2700,"pd":3400,"nd":"추정"},{"c":"맥카페&음료","n":"아메리카노 L","w":420,"k":15,"p":1,"na":0,"s":0,"f":0,"fl":"","ps":3100,"pd":3800,"nd":"추정"},{"c":"맥카페&음료","n":"아이스 아메리카노 M","w":400,"k":9,"p":1,"na":0,"s":0,"f":0,"fl":"","ps":2700,"pd":3400,"nd":"추정"},{"c":"맥카페&음료","n":"아이스 아메리카노 L","w":600,"k":10,"p":0,"na":0,"s":0,"f":0,"fl":"","ps":3100,"pd":3800,"nd":"추정"},{"c":"맥카페&음료","n":"드립 커피 M","w":330,"k":10,"p":1,"na":0,"s":0,"f":0,"fl":"","ps":2400,"pd":3100,"nd":"추정"},{"c":"맥카페&음료","n":"드립 커피 L","w":420,"k":12,"p":1,"na":0,"s":0,"f":0,"fl":"","ps":2800,"pd":3500,"nd":"추정"},{"c":"맥카페&음료","n":"아이스 드립 커피 M","w":400,"k":10,"p":1,"na":0,"s":0,"f":0,"fl":"†","ps":1500,"pd":2200,"nd":"추정"},{"c":"맥카페&음료","n":"아이스 드립 커피 L","w":600,"k":14,"p":1,"na":0,"s":0,"f":0,"fl":"†","ps":2000,"pd":2700,"nd":"추정"},{"c":"맥카페&음료","n":"디카페인 아메리카노 M","w":330,"k":12,"p":1,"na":0,"s":0,"f":0,"fl":"","ps":2900,"pd":3600,"nd":"추정"},{"c":"맥카페&음료","n":"디카페인 아메리카노 L","w":420,"k":12,"p":1,"na":4,"s":0,"f":0,"fl":"","ps":3300,"pd":4000,"nd":"추정"},{"c":"맥카페&음료","n":"디카페인 아이스 아메리카노 M","w":400,"k":8,"p":1,"na":0,"s":0,"f":0,"fl":"","ps":2900,"pd":3600,"nd":"추정"},{"c":"맥카페&음료","n":"디카페인 아이스 아메리카노 L","w":600,"k":10,"p":1,"na":0,"s":0,"f":0,"fl":"","ps":3300,"pd":4000,"nd":"추정"},{"c":"맥카페&음료","n":"피치 아이스티 M","w":400,"k":162,"p":0,"na":8,"s":34,"f":0,"fl":"","ps":3100,"pd":3800,"nd":"추정"},{"c":"맥카페&음료","n":"피치 아이스티 L","w":600,"k":229,"p":1,"na":11,"s":48,"f":0,"fl":"","ps":3600,"pd":4300,"nd":"추정"},{"c":"맥카페&음료","n":"코카 콜라® M","w":425,"k":133,"p":0,"na":9,"s":33,"f":0,"fl":"","ps":2000,"pd":2700,"nd":"추정"},{"c":"맥카페&음료","n":"코카 콜라® L","w":610,"k":185,"p":0,"na":13,"s":46,"f":0,"fl":"","ps":2400,"pd":3100,"nd":"추정"},{"c":"맥카페&음료","n":"코카 콜라® 제로 M","w":425,"k":0,"p":0,"na":34,"s":0,"f":0,"fl":"","ps":2000,"pd":2700,"nd":"추정"},{"c":"맥카페&음료","n":"코카 콜라® 제로 L","w":610,"k":0,"p":0,"na":47,"s":0,"f":0,"fl":"","ps":2400,"pd":3100,"nd":"추정"},{"c":"맥카페&음료","n":"환타® M","w":425,"k":62,"p":0,"na":16,"s":16,"f":0,"fl":"","ps":2000,"pd":2700,"nd":"추정"},{"c":"맥카페&음료","n":"환타® L","w":610,"k":86,"p":0,"na":22,"s":22,"f":0,"fl":"","ps":2400,"pd":3100,"nd":"추정"},{"c":"맥카페&음료","n":"스프라이트® M","w":425,"k":140,"p":0,"na":28,"s":35,"f":0,"fl":"","ps":2000,"pd":2700,"nd":"추정"},{"c":"맥카페&음료","n":"스프라이트® L","w":610,"k":194,"p":0,"na":39,"s":49,"f":0,"fl":"","ps":2400,"pd":3100,"nd":"추정"},{"c":"맥카페&음료","n":"스프라이트® 제로 M","w":425,"k":0,"p":0,"na":16,"s":0,"f":0,"fl":"","ps":2000,"pd":2700,"nd":"추정"},{"c":"맥카페&음료","n":"스프라이트® 제로 L","w":610,"k":0,"p":0,"na":22,"s":0,"f":0,"fl":"","ps":2400,"pd":3100,"nd":"추정"},{"c":"맥카페&음료","n":"제주 풋귤 맥피즈 M","w":400,"k":164,"p":0,"na":27,"s":39,"f":0,"fl":"","ps":2500,"pd":3200,"nd":"추정"},{"c":"맥카페&음료","n":"제주 풋귤 맥피즈 L","w":600,"k":269,"p":0,"na":43,"s":64,"f":0,"fl":"","ps":3000,"pd":3700,"nd":"추정"}]},{"id":"kfc","name":"KFC","color":"#e4002b","dm":"official","snote":"매장가: KFC 강남역 당근 업체 페이지(본사 관리, 2026.09.07)","dnote":"배달가: KFC 공식 홈페이지 딜리버리 메뉴","items":[{"c":"치킨","n":"갓쏘이통다리 1조각","w":101,"k":275,"p":15,"na":687,"s":6,"f":4.5,"fl":"","ps":3800,"pd":4000,"ns":"매장가 추정: 배달가가 같은 갓양념통다리(매장 3,800원) 기준"},{"c":"치킨","n":"갓양념통다리 1조각","w":109,"k":298,"p":14,"na":610,"s":8,"f":4.0,"fl":"","ps":3800,"pd":4000},{"c":"치킨","n":"오리지널통다리 1조각","w":70,"k":162,"p":13,"na":378,"s":1,"f":2.4,"fl":"","ps":3700,"pd":3900},{"c":"치킨","n":"핫크리스피통다리 1조각","w":76,"k":237,"p":13,"na":462,"s":0,"f":3.9,"fl":"","ps":3600,"pd":3800},{"c":"치킨","n":"텐더 2조각","w":68,"k":144,"p":14,"na":558,"s":0,"f":1.8,"fl":"‡","ps":3200,"pd":3700},{"c":"치킨","n":"텐더 4조각","w":136,"k":288,"p":28,"na":1116,"s":0,"f":3.6,"fl":"‡","ps":6000,"pd":6900},{"c":"치킨","n":"핫윙 5조각","w":148,"k":455,"p":25,"na":1113,"s":0,"f":9.8,"fl":"‡","ps":null,"pd":8100,"ns":"매장가 미확인"},{"c":"치킨","n":"핫윙 10조각","w":295,"k":910,"p":50,"na":2225,"s":0,"f":19.5,"fl":"‡","ps":null,"pd":15100,"ns":"매장가 미확인"},{"c":"치킨","n":"핫윙 15조각","w":443,"k":1365,"p":75,"na":3338,"s":0,"f":29.3,"fl":"‡","ps":null,"pd":21300,"ns":"매장가 미확인"},{"c":"버거","n":"징거","w":225,"k":553,"p":33,"na":866,"s":5,"f":7.4,"fl":"","ps":5900,"pd":6800},{"c":"버거","n":"징거타워","w":303,"k":720,"p":36,"na":1343,"s":9,"f":11.0,"fl":"","ps":6900,"pd":7800},{"c":"버거","n":"트위스터","w":175,"k":360,"p":18,"na":1334,"s":4,"f":4.4,"fl":"","ps":4200,"pd":5100},{"c":"버거","n":"클래식징거통다리","w":234,"k":606,"p":24,"na":1010,"s":12,"f":9.2,"fl":"","ps":6500,"pd":7400},{"c":"버거","n":"징거BLT","w":281,"k":696,"p":39,"na":1164,"s":6,"f":11.2,"fl":"","ps":7100,"pd":8000},{"c":"버거","n":"징거더블다운","w":368,"k":842,"p":67,"na":1868,"s":5,"f":13.9,"fl":"","ps":9300,"pd":10200,"ns":"매장가: 나무위키(2026년 7월 개편가)"},{"c":"버거","n":"치즈징거통다리","w":270,"k":713,"p":28,"na":1386,"s":9,"f":15.1,"fl":"","ps":7200,"pd":8100},{"c":"버거","n":"칰폴레맵징거통다리","w":285,"k":695,"p":24,"na":1125,"s":18,"f":10.1,"fl":"","ps":6800,"pd":7700},{"c":"버거","n":"칰폴레맵징거타워","w":348,"k":803,"p":37,"na":1386,"s":16,"f":11.8,"fl":"","ps":7200,"pd":8100},{"c":"켄치밥","n":"갓양념켄치밥","w":308,"k":672,"p":21,"na":1266,"s":9,"f":5.2,"fl":"","ps":4900,"pd":5800},{"c":"켄치밥","n":"툼켄치밥","w":368,"k":969,"p":23,"na":1737,"s":6,"f":10.7,"fl":"","ps":5900,"pd":6800},{"c":"켄치밥","n":"버터갈릭라이스","w":200,"k":407,"p":7,"na":512,"s":2,"f":2.3,"fl":"","ps":2500,"pd":3300},{"c":"사이드","n":"너겟 4조각","w":84,"k":176,"p":12,"na":784,"s":0,"f":3.6,"fl":"‡","ps":2700,"pd":3200},{"c":"사이드","n":"너겟 8조각","w":168,"k":352,"p":24,"na":1568,"s":0,"f":7.2,"fl":"‡","ps":5000,"pd":5900},{"c":"사이드","n":"에그타르트","w":61,"k":215,"p":3,"na":105,"s":8,"f":8.5,"fl":"","ps":2400,"pd":3100},{"c":"사이드","n":"버터비스켓","w":70,"k":300,"p":5,"na":342,"s":8,"f":13.1,"fl":"","ps":2700,"pd":3400},{"c":"사이드","n":"프렌치프라이 M","w":85,"k":144,"p":2,"na":366,"s":0,"f":1.0,"fl":"","ps":2300,"pd":3000},{"c":"사이드","n":"프렌치프라이 L","w":121,"k":204,"p":2,"na":568,"s":0,"f":1.0,"fl":"","ps":2800,"pd":3500},{"c":"사이드","n":"트러플치르르프라이","w":90,"k":256,"p":4,"na":516,"s":2,"f":3.0,"fl":"","ps":2600,"pd":3300},{"c":"사이드","n":"해쉬브라운","w":52,"k":107,"p":1,"na":203,"s":1,"f":1.6,"fl":"","ps":1600,"pd":2300},{"c":"사이드","n":"매쉬포테이토 그레이비","w":120,"k":163,"p":2,"na":424,"s":3,"f":6.0,"fl":"","ps":3100,"pd":3800},{"c":"사이드","n":"빅그레이비","w":100,"k":84,"p":2,"na":832,"s":6,"f":1.5,"fl":"","ps":1900,"pd":2100},{"c":"사이드","n":"코울슬로","w":100,"k":139,"p":1,"na":190,"s":15,"f":1.9,"fl":"","ps":2200,"pd":2900},{"c":"음료","n":"핫초코","w":245,"k":221,"p":2,"na":174,"s":38,"f":1.2,"fl":"","ps":2600,"pd":3500},{"c":"음료","n":"아이스초코","w":335,"k":221,"p":2,"na":174,"s":38,"f":1.2,"fl":"","ps":2600,"pd":3500},{"c":"음료","n":"아메리카노(M)","w":245,"k":7,"p":1,"na":3,"s":0,"f":0,"fl":"","ps":2000,"pd":2900},{"c":"음료","n":"아이스아메리카노(M)","w":245,"k":7,"p":1,"na":3,"s":0,"f":0,"fl":"","ps":2000,"pd":2900},{"c":"음료","n":"아이스아메리카노(L)","w":390,"k":9,"p":1,"na":4,"s":0,"f":0,"fl":"","ps":2600,"pd":3500},{"c":"음료","n":"오렌지주스","w":290,"k":139,"p":0,"na":44,"s":32,"f":0,"fl":"","ps":2500,"pd":3400},{"c":"음료","n":"코카콜라(M)","w":348,"k":150,"p":0,"na":10,"s":37,"f":0,"fl":"","ps":2200,"pd":2900},{"c":"음료","n":"코카콜라(L)","w":522,"k":224,"p":0,"na":16,"s":56,"f":0,"fl":"","ps":2400,"pd":3100},{"c":"음료","n":"코크제로(M)","w":348,"k":0,"p":0,"na":38,"s":0,"f":0,"fl":"","ps":2200,"pd":2900},{"c":"음료","n":"코크제로(L)","w":522,"k":0,"p":0,"na":57,"s":0,"f":0,"fl":"","ps":2400,"pd":3100},{"c":"음료","n":"스프라이트(M)","w":348,"k":157,"p":0,"na":31,"s":39,"f":0,"fl":"","ps":2200,"pd":2900},{"c":"음료","n":"스프라이트(L)","w":522,"k":235,"p":0,"na":47,"s":59,"f":0,"fl":"","ps":2400,"pd":3100},{"c":"음료","n":"스프라이트제로(M)","w":348,"k":0,"p":0,"na":59,"s":0,"f":0,"fl":"","ps":2200,"pd":2900},{"c":"음료","n":"스프라이트제로(L)","w":522,"k":0,"p":0,"na":89,"s":0,"f":0,"fl":"","ps":2400,"pd":3100},{"c":"음료","n":"환타오렌지(M)","w":348,"k":70,"p":0,"na":17,"s":17,"f":0,"fl":"","ps":2200,"pd":2900},{"c":"음료","n":"환타오렌지(L)","w":522,"k":104,"p":0,"na":26,"s":26,"f":0,"fl":"","ps":2400,"pd":3100},{"c":"음료","n":"닥터페퍼제로(M)","w":348,"k":0,"p":0,"na":42,"s":0,"f":0,"fl":"","ps":2200,"pd":2900},{"c":"음료","n":"닥터페퍼제로(L)","w":522,"k":0,"p":0,"na":63,"s":0,"f":0,"fl":"","ps":2400,"pd":3100}]},{"id":"mt","name":"맘스터치","color":"#8a5a2b","dm":"same","snote":"매장가: 나무위키·2026.05 가격 정리","dnote":"본사 차원의 배달가 없음. 일부 가맹점(약 48곳)은 배달가를 평균 15% 정도 따로 받음","items":[{"c":"버거","n":"싸이버거","w":230,"k":594,"p":28,"na":1009,"s":14,"f":8.6,"fl":"","ps":5200,"pd":5200},{"c":"버거","n":"불싸이버거","w":230,"k":543,"p":28,"na":1152,"s":15,"f":6.9,"fl":"","ps":5400,"pd":5400},{"c":"버거","n":"화이트갈릭싸이버거","w":263,"k":759,"p":37,"na":1345,"s":10,"f":13.0,"fl":"","ps":5500,"pd":5500},{"c":"버거","n":"딥치즈싸이버거","w":246,"k":655,"p":30,"na":1196,"s":10,"f":12.1,"fl":"","ps":5400,"pd":5400},{"c":"버거","n":"싸이플렉스버거","w":406,"k":991,"p":44,"na":2024,"s":14,"f":15.2,"fl":"","ps":8300,"pd":8300},{"c":"버거","n":"쉬림프싸이플렉스버거","w":301,"k":858,"p":29,"na":1392,"s":12,"f":11.8,"fl":"","ps":7600,"pd":7600},{"c":"버거","n":"아라비아따치즈버거","w":309,"k":791,"p":41,"na":1622,"s":10,"f":12.0,"fl":"","ps":7400,"pd":7400},{"c":"버거","n":"휠렛버거","w":248,"k":545,"p":32,"na":939,"s":13,"f":4.2,"fl":"","ps":5000,"pd":5000},{"c":"버거","n":"화이트갈릭버거","w":280,"k":638,"p":40,"na":1268,"s":13,"f":9.0,"fl":"","ps":5500,"pd":5500},{"c":"버거","n":"딥치즈버거","w":259,"k":543,"p":33,"na":1087,"s":9,"f":7.1,"fl":"","ps":5400,"pd":5400},{"c":"버거","n":"언빌리버블버거","w":327,"k":702,"p":40,"na":1423,"s":13,"f":6.3,"fl":"","ps":6500,"pd":6500},{"c":"버거","n":"불고기버거","w":164,"k":403,"p":14,"na":615,"s":14,"f":5.1,"fl":"","ps":4200,"pd":4200},{"c":"버거","n":"새우불고기버거","w":252,"k":601,"p":19,"na":1054,"s":20,"f":6.3,"fl":"","ps":6300,"pd":6300},{"c":"버거","n":"통새우버거","w":178,"k":449,"p":12,"na":707,"s":9,"f":12.4,"fl":"","ps":3800,"pd":3800},{"c":"치킨","n":"후라이드 빅싸이순살","w":405,"k":1280,"p":85,"na":1709,"s":0.0,"f":19,"fl":"※","ps":12900,"pd":12900},{"c":"치킨","n":"후라이드 와우순살","w":402,"k":840,"p":88,"na":2026,"s":0.0,"f":16,"fl":"※","ps":12100,"pd":12100},{"c":"치킨","n":"맘스양념 빅싸이순살","w":560,"k":1602,"p":73,"na":3007,"s":67,"f":20,"fl":"※","ps":14900,"pd":14900},{"c":"치킨","n":"맘스양념 와우순살","w":580,"k":1583,"p":81,"na":2743,"s":75,"f":12,"fl":"※","ps":14100,"pd":14100},{"c":"치킨","n":"간장마늘 빅싸이순살","w":528,"k":1531,"p":84,"na":2693,"s":32,"f":19,"fl":"※","ps":14900,"pd":14900},{"c":"치킨","n":"간장마늘 와우순살","w":550,"k":1441,"p":104,"na":2409,"s":44,"f":9.9,"fl":"※","ps":14100,"pd":14100},{"c":"치킨","n":"핫치즈 빅싸이순살","w":625,"k":1875,"p":100,"na":3831,"s":25,"f":27,"fl":"※","ps":15500,"pd":15500},{"c":"치킨","n":"핫치즈 와우순살","w":624,"k":1504,"p":100,"na":3451,"s":50,"f":6.9,"fl":"※","ps":14700,"pd":14700},{"c":"치킨","n":"매직풍 빅싸이순살(디핑소스 포함)","w":580,"k":1670,"p":87,"na":2651,"s":46,"f":24,"fl":"※","ps":15500,"pd":15500},{"c":"치킨","n":"매직풍 와우순살(디핑소스 포함)","w":584,"k":1419,"p":93,"na":3154,"s":53,"f":16,"fl":"※","ps":14700,"pd":14700},{"c":"치킨","n":"후덕죽 빅싸이순살","w":635,"k":1619,"p":89,"na":3067,"s":38,"f":15,"fl":"※","ps":15500,"pd":15500},{"c":"치킨","n":"후덕죽 와우순살","w":635,"k":1391,"p":102,"na":3308,"s":44,"f":7.6,"fl":"※","ps":14700,"pd":14700},{"c":"치킨","n":"셰프스 버번 빅싸이순살","w":470,"k":1434,"p":89,"na":2336,"s":28,"f":20,"fl":"※","ps":15900,"pd":15900},{"c":"치킨","n":"셰프스 버번 와우순살","w":492,"k":1387,"p":84,"na":2317,"s":30,"f":11,"fl":"※","ps":15100,"pd":15100},{"c":"치킨","n":"후라이드통다리","w":200,"k":604,"p":42,"na":872,"s":2.0,"f":10,"fl":"※","ps":5000,"pd":5000},{"c":"치킨","n":"케이준떡강정 S","w":210,"k":582,"p":27,"na":995,"s":17,"f":2.1,"fl":"※","ps":4400,"pd":4400},{"c":"치킨","n":"케이준떡강정 R","w":605,"k":1652,"p":79,"na":2934,"s":60,"f":5.4,"fl":"※","ps":12000,"pd":12000},{"c":"치킨","n":"치파오떡강정 S","w":210,"k":598,"p":27,"na":1098,"s":13,"f":2.1,"fl":"※","ps":4600,"pd":4600},{"c":"치킨","n":"치파오떡강정 R","w":605,"k":1664,"p":79,"na":3194,"s":48,"f":6.0,"fl":"※","ps":12500,"pd":12500},{"c":"치킨","n":"간장마늘떡강정 S","w":210,"k":594,"p":25,"na":1058,"s":19,"f":1.5,"fl":"※","ps":4600,"pd":4600},{"c":"치킨","n":"간장마늘떡강정 R","w":605,"k":1761,"p":73,"na":3067,"s":54,"f":5.4,"fl":"※","ps":12500,"pd":12500},{"c":"치킨","n":"닭강정트리오","w":630,"k":1770,"p":76,"na":3150,"s":50,"f":5.7,"fl":"※","ps":12600,"pd":12600},{"c":"사이드","n":"치킨치즈스틱(2조각)","w":100,"k":278,"p":18,"na":448,"s":1,"f":3.9,"fl":"","ps":4300,"pd":4300},{"c":"사이드","n":"트리플 스낵업(음료·소스 별도)","w":182,"k":572,"p":12,"na":839,"s":5,"f":8.5,"fl":"","ps":6200,"pd":6200},{"c":"사이드","n":"치즈 스낵업(음료·소스 별도)","w":228,"k":710,"p":24,"na":1062,"s":5,"f":10.7,"fl":"","ps":8500,"pd":8500},{"c":"사이드","n":"할라피뇨너겟(4조각)","w":65,"k":186,"p":8,"na":301,"s":0,"f":2.2,"fl":"","ps":2100,"pd":2100},{"c":"사이드","n":"할라피뇨너겟(10조각)","w":155,"k":444,"p":19,"na":717,"s":0,"f":5.3,"fl":"","ps":4600,"pd":4600},{"c":"사이드","n":"오리지널팝콘볼","w":95,"k":248,"p":14,"na":484,"s":2,"f":3.1,"fl":"","ps":2800,"pd":2800},{"c":"사이드","n":"치즈스틱(2조각)","w":40,"k":129,"p":6,"na":217,"s":1,"f":2.7,"fl":"","ps":2100,"pd":2100},{"c":"사이드","n":"매콤김떡만","w":190,"k":469,"p":10,"na":848,"s":5,"f":3.2,"fl":"","ps":3600,"pd":3600},{"c":"사이드","n":"갈릭김떡만","w":190,"k":499,"p":7,"na":459,"s":19,"f":2.5,"fl":"","ps":3600,"pd":3600},{"c":"사이드","n":"미트칠리감자","w":169,"k":440,"p":9,"na":1021,"s":3,"f":4.4,"fl":"","ps":3300,"pd":3300},{"c":"사이드","n":"치즈감자","w":135,"k":419,"p":6,"na":838,"s":2,"f":6.2,"fl":"","ps":2900,"pd":2900},{"c":"사이드","n":"바삭크림치즈볼(2조각)","w":60,"k":209,"p":3,"na":238,"s":4,"f":4.1,"fl":"","ps":2100,"pd":2100},{"c":"사이드","n":"바삭크림치즈볼(4조각)","w":120,"k":418,"p":6,"na":476,"s":8,"f":8.2,"fl":"","ps":3800,"pd":3800},{"c":"사이드","n":"케이준양념감자(중)","w":85,"k":279,"p":4,"na":470,"s":1,"f":3.3,"fl":"","ps":2100,"pd":2100},{"c":"사이드","n":"케이준양념감자(대)","w":150,"k":493,"p":7,"na":829,"s":1,"f":5.9,"fl":"","ps":3600,"pd":3600},{"c":"사이드","n":"콘샐러드","w":100,"k":140,"p":1,"na":370,"s":13,"f":1.2,"fl":"","ps":1900,"pd":1900},{"c":"사이드","n":"코울슬로","w":120,"k":147,"p":1,"na":291,"s":22,"f":0.8,"fl":"","ps":1900,"pd":1900},{"c":"음료","n":"펩시콜라","w":380,"k":135,"p":0,"na":15,"s":33,"f":0,"fl":"","ps":1900,"pd":1900},{"c":"음료","n":"펩시콜라 제로","w":380,"k":0,"p":0,"na":51,"s":0,"f":0,"fl":"","ps":1900,"pd":1900}]},{"id":"sw","name":"써브웨이","color":"#008938","dm":"same","snote":"매장가: 나무위키 15cm","dnote":"배달가 차등 보도 없음 (매장가와 동일하게 계산)","items":[{"c":"샌드위치","n":"에그마요","w":238,"k":416,"p":16.4,"na":554,"s":7.7,"f":4.8,"fl":"","ps":5500,"pd":5500},{"c":"샌드위치","n":"참치","w":238,"k":316,"p":26.9,"na":535,"s":7.6,"f":1.4,"fl":"","ps":5800,"pd":5800},{"c":"샌드위치","n":"베지","w":164,"k":209,"p":9.2,"na":262,"s":7.6,"f":0.6,"fl":"","ps":4900,"pd":4900},{"c":"샌드위치","n":"머쉬룸","w":235,"k":245,"p":11.8,"na":376,"s":7.7,"f":0.6,"fl":"","ps":6200,"pd":6200},{"c":"샌드위치","n":"비엘티","w":182,"k":300,"p":15.9,"na":666,"s":7.9,"f":3.7,"fl":"","ps":6600,"pd":6600},{"c":"샌드위치","n":"이탈리안 비엠티","w":228,"k":388,"p":21,"na":1064,"s":8.6,"f":5.9,"fl":"","ps":6700,"pd":6700},{"c":"샌드위치","n":"치킨 슬라이스","w":221,"k":265,"p":18.6,"na":751,"s":8.7,"f":0.9,"fl":"","ps":6700,"pd":6700},{"c":"샌드위치","n":"스파이시 이탈리안","w":224,"k":464,"p":20.7,"na":1250,"s":8.7,"f":9.1,"fl":"","ps":6900,"pd":6900},{"c":"샌드위치","n":"치킨 데리야끼","w":255,"k":314,"p":26.5,"na":698,"s":10.1,"f":1.2,"fl":"","ps":7000,"pd":7000},{"c":"샌드위치","n":"써브웨이 클럽","w":216,"k":299,"p":19.8,"na":853,"s":8.5,"f":2.4,"fl":"","ps":7100,"pd":7100},{"c":"샌드위치","n":"풀드포크 바비큐","w":235,"k":327,"p":24.8,"na":689,"s":7.8,"f":2.1,"fl":"","ps":7200,"pd":7200},{"c":"샌드위치","n":"로티세리 바비큐 치킨","w":249,"k":327,"p":29.1,"na":542,"s":7.8,"f":2.5,"fl":"","ps":7300,"pd":7300},{"c":"샌드위치","n":"로스트 치킨","w":237,"k":300,"p":26,"na":605,"s":8.7,"f":1.3,"fl":"","ps":7300,"pd":7300},{"c":"샌드위치","n":"잠봉","w":215,"k":376,"p":18.3,"na":621,"s":6,"f":4.7,"fl":"","ps":7400,"pd":7400},{"c":"샌드위치","n":"쉬림프","w":209,"k":241,"p":16.3,"na":415,"s":7.9,"f":0.6,"fl":"","ps":7600,"pd":7600},{"c":"샌드위치","n":"스테이크 & 치즈","w":245,"k":355,"p":28.1,"na":780,"s":8.8,"f":4.2,"fl":"","ps":7900,"pd":7900},{"c":"샌드위치","n":"스파이시 쉬림프","w":213,"k":245,"p":16.5,"na":570,"s":9.1,"f":0.9,"fl":"","ps":8100,"pd":8100},{"c":"샌드위치","n":"치킨 베이컨 아보카도","w":246,"k":355,"p":20.2,"na":940,"s":9.0,"f":3.2,"fl":"","ps":8400,"pd":8400},{"c":"샌드위치","n":"안창 비프&머쉬룸","w":235,"k":292,"p":16.5,"na":598,"s":8,"f":2.5,"fl":"","ps":8600,"pd":8600},{"c":"샌드위치","n":"잠봉 플러스","w":251,"k":475,"p":24.3,"na":828,"s":6.4,"f":7.3,"fl":"","ps":8900,"pd":8900},{"c":"샌드위치","n":"안창 비프","w":235,"k":342,"p":21.6,"na":830,"s":8.3,"f":4.3,"fl":"","ps":10400,"pd":10400},{"c":"샌드위치","n":"램 & 후무스","w":241,"k":406,"p":21,"na":680,"s":6.5,"f":3.7,"fl":"","ps":11900,"pd":11900},{"c":"샌드위치","n":"램","w":226,"k":349,"p":22.7,"na":700,"s":5.7,"f":3.6,"fl":"","ps":13900,"pd":13900},{"c":"랩·아침","n":"스테이크 & 치즈 아보카도 랩","w":249,"k":478,"p":22.3,"na":1009,"s":5.3,"f":9.8,"fl":"","ps":6600,"pd":6600},{"c":"랩·아침","n":"치킨 베이컨 미니 랩","w":161,"k":391,"p":20.8,"na":1091,"s":5.5,"f":7.4,"fl":"","ps":3900,"pd":3900},{"c":"랩·아침","n":"잠봉, 에그 & 치즈 (아침)","w":181,"k":319,"p":20.3,"na":951,"s":6.5,"f":3.2,"fl":"","ps":3900,"pd":3900},{"c":"랩·아침","n":"웨스턴, 에그 & 치즈 (아침)","w":208,"k":315,"p":18.2,"na":849,"s":7.8,"f":3.1,"fl":"","ps":3900,"pd":3900},{"c":"사이드","n":"머쉬룸 수프 (하프)","w":118,"k":64,"p":1.5,"na":336,"s":2.2,"f":2.3,"fl":"","ps":2400,"pd":2400},{"c":"사이드","n":"머쉬룸 수프 (레귤러)","w":237,"k":129,"p":3.1,"na":675,"s":4.5,"f":4.6,"fl":"","ps":3900,"pd":3900},{"c":"사이드","n":"콘 수프 (하프)","w":118,"k":81,"p":2.5,"na":283,"s":5.3,"f":1.4,"fl":"","ps":2400,"pd":2400},{"c":"사이드","n":"콘 수프 (레귤러)","w":237,"k":163,"p":5.2,"na":569,"s":10.7,"f":2.8,"fl":"","ps":3900,"pd":3900},{"c":"사이드","n":"초코칩 쿠키","w":45,"k":228,"p":2.1,"na":165,"s":19.3,"f":5.6,"fl":"","ps":1500,"pd":1500},{"c":"사이드","n":"더블 초코칩 쿠키","w":45,"k":212,"p":2,"na":165,"s":19.9,"f":5.4,"fl":"","ps":1500,"pd":1500},{"c":"사이드","n":"오트밀 레이즌 쿠키","w":45,"k":200,"p":2.4,"na":130,"s":15.8,"f":3.8,"fl":"","ps":1500,"pd":1500},{"c":"사이드","n":"라즈베리 치즈케익 쿠키","w":45,"k":204,"p":2,"na":176,"s":15.8,"f":5,"fl":"","ps":1500,"pd":1500},{"c":"사이드","n":"화이트 초코 마카다미아 쿠키","w":45,"k":245,"p":2.1,"na":178,"s":18.9,"f":5.7,"fl":"","ps":1500,"pd":1500}]},{"id":"pp","name":"파파이스","color":"#f26a21","dm":"none","snote":"매장가: 나무위키(2025.01 기준, 당근 업체 페이지 2026.10 세트가로 일치 확인)","dnote":"배달가가 매장가보다 비싸지만(2024년 보도 기준 품목당 300~800원) 공개된 가격표가 없음","items":[{"c":"버거·샌드위치","n":"클래식 치킨 샌드위치","w":230,"k":815,"p":23,"na":1232,"s":7,"f":17,"fl":"","ps":5900,"pd":null,"nd":"배달가 미공개"},{"c":"버거·샌드위치","n":"스파이시 치킨 샌드위치","w":230,"k":856,"p":22,"na":1513,"s":7,"f":18,"fl":"","ps":5900,"pd":null,"nd":"배달가 미공개"},{"c":"버거·샌드위치","n":"슈림프버거","w":189,"k":474,"p":13,"na":1128,"s":9,"f":4,"fl":"","ps":5900,"pd":null,"nd":"배달가 미공개"},{"c":"버거·샌드위치","n":"루이지애나 치킨 샌드위치","w":284,"k":790,"p":24,"na":1358,"s":16,"f":15,"fl":"","ps":6500,"pd":null,"nd":"배달가 미공개"},{"c":"버거·샌드위치","n":"루이 통버거","w":291,"k":765,"p":33,"na":1750,"s":8,"f":16,"fl":"","ps":7600,"pd":null,"nd":"배달가 미공개"},{"c":"버거·샌드위치","n":"루이 통 스파이시 버거","w":305,"k":916,"p":30,"na":1810,"s":9,"f":22,"fl":"","ps":7600,"pd":null,"nd":"배달가 미공개"},{"c":"버거·샌드위치","n":"루이 탄두리 버거","w":301,"k":898,"p":26,"na":1334,"s":14,"f":22,"fl":"","ps":7600,"pd":null,"nd":"배달가 미공개"},{"c":"치킨","n":"레그 순살 치킨 1조각","w":65,"k":280,"p":9,"na":477,"s":0,"f":10,"fl":"","ps":2900,"pd":null,"nd":"배달가 미공개"},{"c":"치킨","n":"레그 순살 치킨 2조각","w":130,"k":560,"p":17,"na":954,"s":0,"f":19,"fl":"","ps":5700,"pd":null,"nd":"배달가 미공개"},{"c":"치킨","n":"레그 순살 치킨 4조각","w":260,"k":1120,"p":34,"na":1909,"s":1,"f":39,"fl":"","ps":11100,"pd":null,"nd":"배달가 미공개"},{"c":"치킨","n":"레그 순살 치킨 8조각","w":520,"k":2240,"p":69,"na":3817,"s":2,"f":77,"fl":"","ps":21400,"pd":null,"nd":"배달가 미공개"},{"c":"치킨","n":"케이준 스파이시 윙 2조각","w":53,"k":161,"p":10,"na":306,"s":0,"f":4.2,"fl":"","ps":3500,"pd":null,"nd":"배달가 미공개"},{"c":"치킨","n":"케이준 스파이시 윙 4조각","w":106,"k":322,"p":20,"na":612,"s":0,"f":8,"fl":"","ps":6700,"pd":null,"nd":"배달가 미공개"},{"c":"치킨","n":"케이준 스파이시 윙 8조각","w":212,"k":644,"p":41,"na":1225,"s":1,"f":17,"fl":"","ps":12900,"pd":null,"nd":"배달가 미공개"},{"c":"치킨","n":"버터밀크 너겟 6조각","w":108,"k":355,"p":20,"na":563,"s":1,"f":11,"fl":"","ps":3700,"pd":null,"nd":"배달가 미공개"},{"c":"치킨","n":"버터밀크 너겟 9조각","w":162,"k":532,"p":29,"na":844,"s":1,"f":16,"fl":"","ps":5400,"pd":null,"nd":"배달가 미공개"},{"c":"치킨","n":"버터밀크 너겟 12조각","w":216,"k":709,"p":39,"na":1125,"s":1,"f":22,"fl":"","ps":7000,"pd":null,"nd":"배달가 미공개"},{"c":"사이드","n":"루이 비스킷","w":79,"k":325,"p":5,"na":826,"s":3,"f":8,"fl":"","ps":2100,"pd":null,"nd":"배달가 미공개"},{"c":"사이드","n":"케이준 라이스","w":94,"k":154,"p":3,"na":505,"s":1,"f":0.7,"fl":"","ps":2100,"pd":null,"nd":"배달가 미공개"},{"c":"사이드","n":"치즈스틱(2개)","w":48,"k":168,"p":6,"na":253,"s":1,"f":6,"fl":"","ps":2100,"pd":null,"nd":"배달가 미공개"},{"c":"사이드","n":"케이준 후라이(M)","w":100,"k":307,"p":5,"na":835,"s":0,"f":5,"fl":"","ps":2100,"pd":null,"nd":"배달가 미공개"},{"c":"사이드","n":"케이준 후라이(L)","w":140,"k":430,"p":7,"na":1169,"s":1,"f":8,"fl":"","ps":2600,"pd":null,"nd":"배달가 미공개"},{"c":"사이드","n":"에그타르트","w":60,"k":187,"p":3,"na":139,"s":11,"f":5,"fl":"","ps":2200,"pd":null,"nd":"배달가 미공개"},{"c":"사이드","n":"슈크림 모짜 치즈볼(1개)","w":42,"k":142,"p":3,"na":122,"s":2,"f":2.6,"fl":"","ps":1600,"pd":null,"nd":"배달가 미공개"},{"c":"사이드","n":"슈크림 모짜 치즈볼(2개)","w":84,"k":283,"p":6,"na":245,"s":4,"f":5,"fl":"","ps":2500,"pd":null,"nd":"배달가 미공개"},{"c":"음료","n":"코카-콜라(M)","w":440,"k":188,"p":0,"na":13,"s":47,"f":0,"fl":"","ps":1900,"pd":null,"nd":"배달가 미공개"},{"c":"음료","n":"코카-콜라(L)","w":568,"k":243,"p":0,"na":17,"s":61,"f":0,"fl":"","ps":2100,"pd":null,"nd":"배달가 미공개"},{"c":"음료","n":"코카-콜라 제로(M)","w":440,"k":0,"p":0,"na":48,"s":0,"f":0,"fl":"","ps":1900,"pd":null,"nd":"배달가 미공개"},{"c":"음료","n":"코카-콜라 제로(L)","w":568,"k":0,"p":0,"na":62,"s":0,"f":0,"fl":"","ps":2100,"pd":null,"nd":"배달가 미공개"},{"c":"음료","n":"스프라이트(M)","w":440,"k":199,"p":0,"na":40,"s":50,"f":0,"fl":"","ps":1900,"pd":null,"nd":"배달가 미공개"}]},{"id":"bk","name":"버거킹","color":"#d62300","dm":"rule","snote":"매장가: 버거킹 공식 홈페이지","dnote":"배달가 추정: 매장가 + 900원 (나무위키 2026.10 \"배달 시 단품 900원씩 비쌈\", 앱 전용)","items":[{"c":"와퍼·프리미엄","n":"와퍼","w":286,"k":706,"p":30,"na":1098,"s":10,"f":12,"fl":"","ps":7400,"pd":8300,"nd":"추정"},{"c":"와퍼·프리미엄","n":"치즈와퍼","w":310,"k":799,"p":35,"na":1571,"s":7,"f":18,"fl":"","ps":8000,"pd":8900,"nd":"추정"},{"c":"와퍼·프리미엄","n":"베이컨치즈와퍼","w":320,"k":844,"p":37,"na":1654,"s":8,"f":19,"fl":"","ps":9200,"pd":10100,"nd":"추정"},{"c":"와퍼·프리미엄","n":"불고기와퍼","w":293,"k":738,"p":31,"na":1137,"s":10,"f":13,"fl":"","ps":7400,"pd":8300,"nd":"추정"},{"c":"와퍼·프리미엄","n":"갈릭불고기와퍼","w":293,"k":768,"p":31,"na":1007,"s":9,"f":12,"fl":"","ps":7700,"pd":8600,"nd":"추정"},{"c":"와퍼·프리미엄","n":"통새우와퍼","w":309,"k":714,"p":34,"na":1258,"s":9,"f":12,"fl":"","ps":8200,"pd":9100,"nd":"추정"},{"c":"와퍼·프리미엄","n":"콰트로치즈와퍼","w":331,"k":887,"p":43,"na":1647,"s":6,"f":21,"fl":"","ps":8200,"pd":9100,"nd":"추정"},{"c":"와퍼·프리미엄","n":"몬스터와퍼","w":403,"k":1094,"p":52,"na":2146,"s":8,"f":21,"fl":"","ps":9600,"pd":10500,"nd":"추정"},{"c":"와퍼·프리미엄","n":"트러플 머쉬룸 와퍼","w":325,"k":761,"p":37,"na":1195,"s":6,"f":16,"fl":"","ps":9700,"pd":10600,"nd":"추정"},{"c":"와퍼·프리미엄","n":"핫 트러플 머쉬룸 와퍼","w":285,"k":724,"p":35,"na":1278,"s":7,"f":14,"fl":"","ps":9700,"pd":10600,"nd":"추정"},{"c":"와퍼·프리미엄","n":"메종 트러플치즈 버거","w":281,"k":744,"p":35,"na":1451,"s":14,"f":19,"fl":"","ps":10500,"pd":11400,"nd":"추정"},{"c":"와퍼·프리미엄","n":"블랙 트러플치즈 버거","w":281,"k":769,"p":34,"na":1430,"s":9,"f":18,"fl":"","ps":10700,"pd":11600,"nd":"추정"},{"c":"와퍼·프리미엄","n":"오리지널스 뉴욕 스테이크","w":307,"k":826,"p":51,"na":1762,"s":10,"f":22,"fl":"","ps":10900,"pd":11800,"nd":"추정"},{"c":"와퍼·프리미엄","n":"오리지널스 엘파소 치폴레","w":291,"k":911,"p":44,"na":1338,"s":9,"f":25,"fl":"","ps":10900,"pd":11800,"nd":"추정"},{"c":"와퍼·프리미엄","n":"더오치 맥시멈2","w":375,"k":1018,"p":53,"na":2045,"s":9,"f":29,"fl":"","ps":10700,"pd":11600,"nd":"추정"},{"c":"와퍼·프리미엄","n":"몬스터 맥시멈","w":376,"k":1067,"p":51,"na":2273,"s":13,"f":19,"fl":"","ps":11900,"pd":12800,"nd":"추정"},{"c":"와퍼·프리미엄","n":"몬스터 맥시멈2","w":457,"k":1305,"p":71,"na":2313,"s":13,"f":23,"fl":"","ps":15300,"pd":16200,"nd":"추정"},{"c":"와퍼·프리미엄","n":"몬스터 맥시멈3","w":559,"k":1619,"p":90,"na":2810,"s":19,"f":35,"fl":"","ps":18500,"pd":19400,"nd":"추정"},{"c":"와퍼·프리미엄","n":"데리야킹 크리스퍼","w":233,"k":660,"p":26,"na":1923,"s":18,"f":7,"fl":"","ps":6200,"pd":7100,"nd":"추정"},{"c":"주니어·밸류버거","n":"와퍼주니어","w":156,"k":376,"p":17,"na":556,"s":4,"f":5,"fl":"","ps":5000,"pd":5900,"nd":"추정"},{"c":"주니어·밸류버거","n":"치즈와퍼주니어","w":168,"k":422,"p":18,"na":778,"s":4,"f":7,"fl":"","ps":5300,"pd":6200,"nd":"추정"},{"c":"주니어·밸류버거","n":"불고기와퍼주니어","w":160,"k":413,"p":16,"na":617,"s":5,"f":6,"fl":"","ps":5000,"pd":5900,"nd":"추정"},{"c":"주니어·밸류버거","n":"콰트로치즈 와퍼주니어","w":179,"k":470,"p":21,"na":833,"s":4,"f":10,"fl":"","ps":5600,"pd":6500,"nd":"추정"},{"c":"주니어·밸류버거","n":"통새우와퍼주니어","w":168,"k":414,"p":17,"na":658,"s":5,"f":7,"fl":"","ps":5600,"pd":6500,"nd":"추정"},{"c":"주니어·밸류버거","n":"몬스터 주니어","w":243,"k":687,"p":30,"na":1293,"s":7,"f":13,"fl":"","ps":5200,"pd":6100,"nd":"추정"},{"c":"주니어·밸류버거","n":"치즈버거","w":130,"k":380,"p":16,"na":766,"s":6,"f":7,"fl":"","ps":3800,"pd":4700,"nd":"추정"},{"c":"주니어·밸류버거","n":"비프불고기버거","w":136,"k":384,"p":15,"na":492,"s":5,"f":5,"fl":"","ps":4300,"pd":5200,"nd":"추정"},{"c":"주니어·밸류버거","n":"더블비프불고기버거","w":190,"k":565,"p":26,"na":796,"s":6,"f":12,"fl":"","ps":5300,"pd":6200,"nd":"추정"},{"c":"주니어·밸류버거","n":"통새우슈림프버거","w":190,"k":512,"p":16,"na":1077,"s":8,"f":5,"fl":"","ps":6300,"pd":7200,"nd":"추정"},{"c":"주니어·밸류버거","n":"비프 킹 랩","w":157,"k":357,"p":15,"na":741,"s":5,"f":7,"fl":"","ps":3600,"pd":4500,"nd":"추정"},{"c":"치킨버거","n":"치킨버거","w":179,"k":532,"p":18,"na":840,"s":4,"f":7,"fl":"","ps":4000,"pd":4900,"nd":"추정"},{"c":"치킨버거","n":"치킨 치즈 마요 버거","w":195,"k":640,"p":20,"na":1122,"s":4,"f":10,"fl":"","ps":4200,"pd":5100,"nd":"추정"},{"c":"치킨버거","n":"롱치킨버거","w":206,"k":621,"p":23,"na":1235,"s":7,"f":7,"fl":"","ps":5000,"pd":5900,"nd":"추정"},{"c":"치킨버거","n":"불고기 롱치킨버거","w":234,"k":691,"p":23,"na":1434,"s":7,"f":7,"fl":"","ps":5000,"pd":5900,"nd":"추정"},{"c":"치킨버거","n":"더 크리스퍼","w":225,"k":696,"p":26,"na":1392,"s":5,"f":9,"fl":"","ps":5700,"pd":6600,"nd":"추정"},{"c":"치킨버거","n":"더 크리스퍼 베이컨&치즈","w":231,"k":727,"p":28,"na":1553,"s":6,"f":10,"fl":"","ps":6700,"pd":7600,"nd":"추정"},{"c":"치킨버거","n":"치킨킹","w":224,"k":673,"p":24,"na":1037,"s":8,"f":10,"fl":"","ps":6700,"pd":7600,"nd":"추정"},{"c":"치킨버거","n":"치킨킹BLT","w":269,"k":739,"p":25,"na":1065,"s":12,"f":11,"fl":"","ps":7700,"pd":8600,"nd":"추정"},{"c":"아침메뉴","n":"오믈렛 크루아상위치","w":144,"k":485,"p":10,"na":566,"s":7,"f":11,"fl":"","ps":4300,"pd":5200,"nd":"추정"},{"c":"아침메뉴","n":"잠봉햄&치즈오믈렛 크루아상위치","w":171,"k":507,"p":15,"na":917,"s":7,"f":13,"fl":"","ps":4900,"pd":5800,"nd":"추정"},{"c":"아침메뉴","n":"BLT 오믈렛 크루아상위치","w":192,"k":547,"p":15,"na":768,"s":8,"f":14,"fl":"","ps":5300,"pd":6200,"nd":"추정"},{"c":"사이드","n":"너겟킹 4조각","w":66,"k":147,"p":9,"na":422,"s":0.4,"f":2,"fl":"","ps":2300,"pd":3200,"nd":"추정"},{"c":"사이드","n":"너겟킹 8조각","w":132,"k":294,"p":17,"na":843,"s":0.7,"f":4,"fl":"","ps":4500,"pd":5400,"nd":"추정"},{"c":"사이드","n":"너겟킹 10조각","w":165,"k":368,"p":22,"na":1054,"s":0.9,"f":5,"fl":"","ps":5600,"pd":6500,"nd":"추정"},{"c":"사이드","n":"바삭킹 2조각","w":99,"k":272,"p":15,"na":497,"s":1.7,"f":5,"fl":"","ps":3200,"pd":4100,"nd":"추정"},{"c":"사이드","n":"바삭킹 4조각","w":198,"k":544,"p":29,"na":993,"s":3.4,"f":10,"fl":"","ps":6000,"pd":6900,"nd":"추정"},{"c":"사이드","n":"바삭킹 8조각+디아블로소스","w":421,"k":1127,"p":59,"na":2279,"s":14.1,"f":20.1,"fl":"","ps":11600,"pd":12500,"nd":"추정"},{"c":"사이드","n":"바삭킹 8조각+스위트칠리소스","w":396,"k":1088,"p":59,"na":1986,"s":6.7,"f":20.1,"fl":"","ps":11600,"pd":12500,"nd":"추정"},{"c":"사이드","n":"크리스퍼 텐더","w":80,"k":176,"p":11,"na":361,"s":1,"f":1,"fl":"","ps":3300,"pd":4200,"nd":"추정"},{"c":"사이드","n":"크리스퍼 랩","w":133,"k":359,"p":12,"na":651,"s":4,"f":3,"fl":"","ps":3600,"pd":4500,"nd":"추정"},{"c":"사이드","n":"코코넛슈림프 3조각","w":82,"k":216,"p":5,"na":505,"s":11,"f":4,"fl":"","ps":4100,"pd":5000,"nd":"추정"},{"c":"사이드","n":"코코넛슈림프 6조각","w":139,"k":382,"p":10,"na":804,"s":12,"f":7,"fl":"","ps":7200,"pd":8100,"nd":"추정"},{"c":"사이드","n":"코코넛슈림프 9조각","w":196,"k":548,"p":15,"na":1104,"s":13,"f":11,"fl":"","ps":10100,"pd":11000,"nd":"추정"},{"c":"사이드","n":"쉐이킹프라이 구운갈릭","w":105,"k":292,"p":4,"na":634,"s":0.5,"f":3.1,"fl":"","ps":2600,"pd":3500,"nd":"추정"},{"c":"사이드","n":"쉐이킹프라이 매콤치즈","w":105,"k":287,"p":4,"na":687,"s":0.6,"f":3.1,"fl":"","ps":2600,"pd":3500,"nd":"추정"},{"c":"사이드","n":"쉐이킹프라이 스윗어니언","w":105,"k":297,"p":4,"na":486,"s":1.3,"f":3.0,"fl":"","ps":2600,"pd":3500,"nd":"추정"},{"c":"사이드","n":"딥 트러플 프라이","w":130,"k":384,"p":4,"na":529,"s":2,"f":6,"fl":"","ps":3000,"pd":3900,"nd":"추정"},{"c":"사이드","n":"해쉬브라운","w":55,"k":148,"p":1,"na":309,"s":0,"f":2.1,"fl":"","ps":1900,"pd":2800,"nd":"추정"},{"c":"사이드","n":"콘샐러드","w":95,"k":127,"p":2,"na":230,"s":4,"f":1,"fl":"","ps":2300,"pd":3200,"nd":"추정"},{"c":"사이드","n":"코울슬로","w":95,"k":155,"p":1,"na":210,"s":9,"f":0.9,"fl":"","ps":2300,"pd":3200,"nd":"추정"},{"c":"디저트·음료","n":"애플 파이 로얄","w":61,"k":188,"p":2,"na":120,"s":6,"f":2.5,"fl":"","ps":2500,"pd":3400,"nd":"추정"},{"c":"디저트·음료","n":"트러플 머쉬룸 파이 로얄","w":65,"k":183,"p":3,"na":235,"s":2,"f":3,"fl":"","ps":2700,"pd":3600,"nd":"추정"},{"c":"디저트·음료","n":"밀크 선데","w":140,"k":165,"p":1,"na":116,"s":27,"f":3,"fl":"","ps":2200,"pd":3100,"nd":"추정"},{"c":"디저트·음료","n":"초코 선데","w":165,"k":232,"p":2,"na":147,"s":38,"f":3,"fl":"","ps":2400,"pd":3300,"nd":"추정"},{"c":"디저트·음료","n":"킹플로트 메론","w":380,"k":266,"p":3,"na":88,"s":50,"f":2.1,"fl":"","ps":3200,"pd":4100,"nd":"추정"},{"c":"디저트·음료","n":"킹플로트 소다","w":380,"k":261,"p":3,"na":93,"s":50,"f":2.4,"fl":"","ps":3200,"pd":4100,"nd":"추정"},{"c":"디저트·음료","n":"카페라떼","w":218,"k":117,"p":6,"na":67,"s":6,"f":4,"fl":"","ps":2900,"pd":3800,"nd":"추정"},{"c":"디저트·음료","n":"아이스 카페라떼","w":298,"k":73,"p":4,"na":34,"s":3,"f":2.2,"fl":"","ps":2900,"pd":3800,"nd":"추정"},{"c":"디저트·음료","n":"핫초코","w":240,"k":214,"p":3,"na":161,"s":38,"f":1,"fl":"","ps":2400,"pd":3300,"nd":"추정"},{"c":"디저트·음료","n":"아이스초코","w":294,"k":305,"p":3,"na":172,"s":40,"f":2,"fl":"","ps":2400,"pd":3300,"nd":"추정"},{"c":"디저트·음료","n":"미닛메이드 오렌지","w":350,"k":112,"p":1.9,"na":95,"s":22,"f":0,"fl":"","ps":2900,"pd":3800,"nd":"추정"},{"c":"디저트·음료","n":"아메리카노","w":249,"k":10,"p":0.3,"na":0,"s":0,"f":0,"fl":"","ps":1600,"pd":2500,"nd":"추정"},{"c":"디저트·음료","n":"아이스 아메리카노","w":271,"k":8,"p":0.5,"na":0,"s":0,"f":0,"fl":"","ps":1600,"pd":2500,"nd":"추정"}]}];
+const ETC = {id:'etc', name:'기타 매장', color:'#7a8580', dm:'custom', snote:'직접 입력한 가격', dnote:'직접 입력한 배달가', items:[]};
+const BRANDS = [...DATA, ETC];
+const won = n => Math.round(n).toLocaleString('ko-KR') + '원';
+const fmt = n => (Math.round(n*10)/10).toLocaleString('ko-KR');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const per20 = (price, p) => (p >= 1 && price != null) ? price / p * 20 : null;
+
+// 등급 기준: 단백질 공급원이라 부를 만한 메뉴만 모아 매장가로 순위를 매김.
+// 식약처 영양강조표시 '고단백' 기준 = 1회 제공량당 단백질이 1일 기준치(55g)의 20% 이상 → 11g 이상.
+const MIN_P = 11;
+const POOL = DATA.flatMap(b => b.items.filter(i => i.p >= MIN_P && i.ps != null).map(i => i.ps / i.p * 20)).sort((a,b)=>a-b);
+const q = f => POOL[Math.max(0, Math.ceil(f * POOL.length) - 1)];
+const T30 = q(0.3), T60 = q(0.6);
+const tier = v => v === null ? 'na' : v <= T30 ? 'good' : v <= T60 ? 'soso' : 'bad';
+const WORD = {good:'GOOD', soso:'SOSO', bad:'BAD', na:'—'};
+// 순위 퍼센트: 고단백 기준 메뉴 중 20g당 가격이 이 값 이하인 메뉴 비율 (올림, 1% 단위)
+function rankText(v){
+  const n = POOL.length; let c = 0; for (const x of POOL) { if (x <= v) c++; else break; }
+  if (c === 0) return `고단백 메뉴 ${n}개 중 1위보다 저렴 · 상위 1% 이내`;
+  if (c === n && v > POOL[n-1]) return `고단백 메뉴 ${n}개 모두보다 비쌈 · 하위 1% 이내`;
+  return `고단백 메뉴 ${n}개 중 상위 ${Math.ceil(c / n * 100)}% · ${c}위 수준`;
+}
+const FLAG = {'※':'100g당 값 환산','‡':'조각 수 환산','†':'해피스낵 할인가'};
+const MODE = {store:'매장', dlv:'배달'};
+const nAll = DATA.reduce((a,b)=>a+b.items.length,0);
+
+document.getElementById('thresh').innerHTML =
+  `<span><span class="pill good">good</span> 상위 30% · <b>${won(T30)}</b> 이하</span>` +
+  `<span><span class="pill soso">soso</span> 30~60% · <b>${won(T60)}</b> 이하</span><span><span class="pill bad">bad</span> 나머지</span>`;
+document.getElementById('basis').textContent =
+  `기준: 전체 ${nAll}개 메뉴 중 단백질이 1개에 ${MIN_P}g 이상인 ${POOL.length}개(식약처 '고단백' 표시 기준)의 매장가 순위. 음료·디저트처럼 단백질이 거의 없는 메뉴는 기준에서 뺐습니다.`;
+
+// ---------- state ----------
+const saved = (() => { try { return JSON.parse(localStorage.getItem('p20') || '{}'); } catch { return {}; } })();
+const S = { brand: saved.brand && BRANDS.some(b=>b.id===saved.brand) ? saved.brand : DATA[0].id, mode: saved.mode === 'dlv' ? 'dlv' : 'store',
+  cat: '전체', q: '', sort: 'value', carts: saved.carts || {}, open: null, example: !saved.carts, edit: null, delArm: null };
+if (S.example) S.carts = { lotteria: [ {k:'버거|리아 불고기', qty:1, dc:{}}, {k:'사이드(디저트)|지파이 고소한맛(S)', qty:1, dc:{store:3500}} ] };
+Object.values(S.carts).forEach(c => c.forEach(l => { if (typeof l.dc === 'number') l.dc = {store:l.dc}; else if (!l.dc || typeof l.dc !== 'object') l.dc = {}; }));
+const save = () => { S.example = false; try { localStorage.setItem('p20', JSON.stringify({brand:S.brand, mode:S.mode, carts:S.carts})); } catch {} };
+
+// ---------- custom menus: private db subtree, browser fallback ----------
+const LSK = 'p20custom';
+let CUSTOM = (() => { try { return JSON.parse(localStorage.getItem(LSK) || '[]'); } catch { return []; } })();
+const ST = { db: null, uid: null, where: 'local', err: '' };
+const saveLocal = () => { try { localStorage.setItem(LSK, JSON.stringify(CUSTOM)); } catch {} };
+const col = () => ST.db.collection('data/users/' + ST.uid);
+function setStat(){
+  const n = CUSTOM.length;
+  document.getElementById('cstat').textContent = ST.err ? ST.err :
+    ST.where === 'db' ? `직접 추가한 메뉴 ${n}개 · 내 계정에 저장되어 다른 기기에서도 보이고, 다른 사람에게는 보이지 않습니다.` :
+    `직접 추가한 메뉴 ${n}개 · 이 기기에만 저장됩니다. 다른 기기로 옮기거나 백업하려면 아래 내보내기·가져오기를 쓰세요.`;
+}
+(async () => {
+  try {
+    if (!window.claude?.use) return;
+    const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    const uid = user ? await user.id() : null;
+    if (!db || !uid) return;
+    ST.db = db; ST.uid = uid; ST.where = 'db';
+    const local = CUSTOM.slice();
+    for (const m of local) { try { await col().doc(m.id).set(m); } catch {} }
+    if (local.length) { CUSTOM = []; saveLocal(); }
+    col().onSnapshot(snap => {
+      CUSTOM = snap.docs.map(d => d.data()).filter(m => m && m.type === 'menu');
+      ST.err = ''; setStat(); renderAll();
+    }, () => { ST.where = 'local'; ST.err = '계정 저장소 연결이 끊겨 새로 추가한 메뉴는 이 브라우저에만 저장됩니다.'; setStat(); });
+  } catch {} finally { setStat(); }
+})();
+async function putCustom(m){
+  if (ST.where === 'db') { await col().doc(m.id).set(m); }
+  else { const i = CUSTOM.findIndex(x => x.id === m.id); if (i >= 0) CUSTOM[i] = m; else CUSTOM.push(m); saveLocal(); renderAll(); }
+}
+async function delCustom(id){
+  if (ST.where === 'db') { await col().doc(id).delete(); }
+  else { CUSTOM = CUSTOM.filter(x => x.id !== id); saveLocal(); renderAll(); }
+}
+
+// ---------- helpers ----------
+const B = () => BRANDS.find(b => b.id === S.brand);
+const customOf = bid => CUSTOM.filter(m => m.brand === bid).map(m => ({ c: bid === 'etc' ? (m.store || '기타') : (m.c || '직접 추가'), n: m.n, w: m.w ?? '', k: m.k ?? '', p: m.p, na: m.na ?? '', s: m.s ?? '', f: m.f ?? '', fl: '',
+  ps: m.ps ?? null, pd: m.pd ?? null, cid: m.id, nd: m.pd == null ? '배달가 미입력' : '', ns: m.ps == null ? '매장가 미입력' : '' }));
+const itemsOf = b => [...b.items, ...customOf(b.id)];
+const mode = () => (S.mode === 'dlv' && B().dm !== 'none') ? 'dlv' : 'store';
+function priceOf(i){
+  if (mode() === 'store') return i.ps;
+  if (i.cid && i.pd == null && B().dm === 'same') return i.ps;
+  return i.pd;
+}
+const noteOf = i => mode() === 'dlv' ? (i.cid && i.pd == null && B().dm === 'same' ? '' : i.nd) : i.ns;
+const cart = () => (S.carts[S.brand] ||= []);
+const key = i => i.cid ? 'u|' + i.cid : i.c + '|' + i.n;
+const itemOf = k => itemsOf(B()).find(i => key(i) === k);
+
+// ---------- brand rail + mode ----------
+const brandsEl = document.getElementById('brands');
+function renderBrands(){
+  brandsEl.innerHTML = '';
+  BRANDS.forEach(b => {
+    const n = itemsOf(b).length;
+    if (b.id === 'etc' && !n && S.brand !== 'etc') return;
+    const el = document.createElement('button');
+    el.className = 'brand'; el.type = 'button'; el.style.setProperty('--c', b.color); el.dataset.id = b.id;
+    el.innerHTML = `<span class="dot"></span>${b.name}<span class="cnt">${n}</span>`;
+    el.setAttribute('aria-pressed', b.id === S.brand);
+    el.onclick = () => { S.brand = b.id; S.cat = '전체'; S.open = null; save(); renderAll(); };
+    brandsEl.appendChild(el);
+  });
+}
+const mS = document.getElementById('m-store'), mD = document.getElementById('m-dlv');
+mS.onclick = () => { S.mode = 'store'; S.open = null; save(); renderAll(); };
+mD.onclick = () => { S.mode = 'dlv'; S.open = null; save(); renderAll(); };
+function renderMode(){
+  const b = B(), m = mode();
+  mD.disabled = b.dm === 'none';
+  mS.setAttribute('aria-pressed', m === 'store'); mD.setAttribute('aria-pressed', m === 'dlv');
+  const label = {official:'배달가 따로 있음 · 공식 가격', rule:'배달가 따로 있음 · 추정 가격', same:'매장가와 배달가 동일', none:'배달가 미공개', custom:'직접 입력한 가격'}[b.dm];
+  let txt = `<b>${b.name}: ${label}.</b> `;
+  if (b.dm === 'none') txt += b.dnote + '. 배달로 시켰다면 메뉴를 담고 <b>할인</b> 버튼에 실제 결제가를 넣어 계산하세요.';
+  else if (b.dm === 'custom') txt = `<b>기타 매장:</b> 직접 추가한 메뉴만 있습니다. 배달가를 넣지 않은 메뉴는 배달 모드에서 가격 없음으로 나옵니다.`;
+  else txt += (m === 'dlv' ? b.dnote : b.snote) + '.';
+  if (S.mode === 'dlv' && b.dm === 'none') txt = `<b>${b.name}은 배달가 자료가 없어 매장가로 보여 줍니다.</b> ` + b.dnote + '. 실제 결제가는 <b>할인</b> 버튼으로 입력하세요.';
+  document.getElementById('mnote').innerHTML = txt;
+}
+
+function renderTabs(){
+  const cats = ['전체', ...new Set(itemsOf(B()).map(i => i.c))];
+  if (!cats.includes(S.cat)) S.cat = '전체';
+  const el = document.getElementById('tabs'); el.innerHTML = '';
+  if (cats.length === 1) return;
+  cats.forEach(c => {
+    const t = document.createElement('button');
+    t.className = 'tab'; t.type = 'button'; t.role = 'tab'; t.textContent = c; t.setAttribute('aria-selected', c === S.cat);
+    t.onclick = () => { S.cat = c; renderMenu(); renderTabs(); };
+    el.appendChild(t);
+  });
+}
+
+function renderMenu(){
+  const b = B(), m = mode(); const inCart = new Map(cart().map(l => [l.k, l.qty]));
+  let items = itemsOf(b).map((i, idx) => { const pr = priceOf(i); return {...i, idx, pr, v: per20(pr, i.p)}; })
+    .filter(i => (S.cat === '전체' || i.c === S.cat) && (!S.q || i.n.toLowerCase().includes(S.q.toLowerCase())));
+  const big = 1e12;
+  if (S.sort === 'value') items.sort((a,b) => (a.v ?? big) - (b.v ?? big));
+  if (S.sort === 'price') items.sort((a,b) => (a.pr ?? big) - (b.pr ?? big));
+  if (S.sort === 'protein') items.sort((a,b) => b.p - a.p);
+  const ul = document.getElementById('menu'); ul.innerHTML = '';
+  if (!items.length) { ul.innerHTML = b.id === 'etc' && !S.q ? '<li class="empty">아직 추가한 메뉴가 없습니다. <b>+ 메뉴 직접 추가</b>로 다른 매장 메뉴를 넣어 보세요.</li>' : '<li class="empty">검색어와 맞는 메뉴가 없습니다. 없는 메뉴라면 <b>+ 메뉴 직접 추가</b>로 넣을 수 있어요.</li>'; return; }
+  items.forEach(i => {
+    const t = tier(i.v); const k = key(i); const n = inCart.get(k) || 0; const note = noteOf(i);
+    const off = i.pr == null;
+    const other = m === 'dlv' && i.ps != null && i.pd != null && i.pd !== i.ps ? `매장 ${won(i.ps)}` : '';
+    const sub = [S.cat === '전체' ? esc(i.c) : '', i.k !== '' ? i.k + 'kcal' : '', '단백질 ' + fmt(i.p) + 'g', i.fl ? FLAG[i.fl] : '', note && note !== '추정' ? esc(note) : '', i.p < MIN_P ? '저단백' : ''].filter(Boolean).join(' · ');
+    const li = document.createElement('li'); li.className = 'mi' + (off ? ' off' : '');
+    li.innerHTML = `<div class="nm">${esc(i.n)} <span class="pill ${t}">${off ? '가격 없음' : t === 'na' ? '계산 불가' : WORD[t]}</span>${note === '추정' ? ' <span class="tag">추정가</span>' : ''}${i.cid ? ' <span class="mine">직접 추가</span>' : ''}
+        <small>${sub}</small>${i.cid ? `<div class="mact"><button type="button" data-a="edit">수정</button><button type="button" class="del" data-a="del">${S.delArm === i.cid ? '한 번 더 누르면 삭제' : '삭제'}</button></div>` : ''}</div>
+      <div class="v"><b>${off ? '—' : won(i.pr)}</b>${i.v === null ? (off ? MODE[m] + '가 없음' : '20g당 —') : '20g당 ' + won(i.v)}${other ? `<br><span style="color:var(--muted);font-size:12px">${other}</span>` : ''}</div>
+      ${n ? `<span class="stp"><button class="add" type="button" data-a="dec" aria-label="${esc(i.n)} 1개 빼기">−</button><span class="n" aria-label="담은 개수">${n}</span><button class="add" type="button" data-a="inc" data-on="1" aria-label="${esc(i.n)} 1개 더 담기" ${off ? 'disabled' : ''}>+</button></span>`
+        : `<button class="add" type="button" data-a="inc" aria-label="${esc(i.n)} 담기" ${off ? 'disabled title="이 주문 방식의 가격이 없습니다"' : ''}>+</button>`}`;
+    const inc = li.querySelector('[data-a="inc"]'); if (!off) inc.onclick = () => addItem(i);
+    const dec = li.querySelector('[data-a="dec"]'); if (dec) dec.onclick = () => decItem(i);
+    bindDetail(li, i);
+    if (i.cid) {
+      li.querySelector('[data-a="edit"]').onclick = () => openForm(CUSTOM.find(x => x.id === i.cid));
+      li.querySelector('[data-a="del"]').onclick = async () => {
+        if (S.delArm !== i.cid) { S.delArm = i.cid; renderMenu(); return; }
+        S.delArm = null;
+        try { await delCustom(i.cid); Object.values(S.carts).forEach((c, _) => {}); for (const bid in S.carts) S.carts[bid] = S.carts[bid].filter(l => l.k !== 'u|' + i.cid); save(); renderAll(); }
+        catch { ST.err = '삭제하지 못했습니다. 잠시 후 다시 시도하세요.'; setStat(); }
+      };
+    }
+    ul.appendChild(li);
+  });
+}
+
+
+// ---------- detail dialog (click / Enter on a menu row) ----------
+const DV = {k:2000, p:55, na:2000, s:100, f:15}; // 한국 1일 영양성분 기준치
+const dlvPrice = i => B().dm === 'none' ? null : (i.cid && i.pd == null && B().dm === 'same') ? i.ps : i.pd;
+function showDetail(i){
+  const d = document.getElementById('det');
+  document.getElementById('det-t').textContent = i.n;
+  document.getElementById('det-s').textContent = `${B().name} · ${i.c}${i.cid ? ' · 직접 추가한 메뉴' : ''}`;
+  const row = (label, val, unit, dv, hl) => {
+    const has = val !== '' && val != null;
+    const pct = has && dv ? Math.round(val / dv * 100) : null;
+    return `<tr class="${hl ? 'hl' : ''}"><td>${label}</td><td>${has ? fmt(val) + unit : '—'}</td><td>${pct == null ? '—' : pct + '%'}${pct == null ? '' : `<span class="bar"><i class="${pct >= 50 && label !== '단백질' ? 'hi' : ''}" style="width:${Math.min(pct,100)}%"></i></span>`}</td></tr>`;
+  };
+  const ps = i.ps, pd = dlvPrice(i), vs = per20(ps, i.p), vd = per20(pd, i.p);
+  const pcell = (k, pr, v, note) => `<div><span class="k">${k}</span><span class="pv">${pr == null ? '가격 없음' : won(pr)}</span>
+    <span class="r">${v == null ? (pr == null ? (note || '') : '단백질이 적어 계산 불가') : `20g당 ${won(v)} · <span class="pill ${tier(v)}">${WORD[tier(v)]}</span>`}</span>
+    ${v != null ? `<span class="r">${rankText(v)}</span>` : ''}${note && pr != null ? `<span class="r">${note === '추정' ? '추정가' : note}</span>` : ''}</div>`;
+  const notes = [i.fl ? FLAG[i.fl] : '', i.p < MIN_P ? `단백질 ${MIN_P}g 미만이라 등급 기준(고단백 메뉴)에는 들어가지 않는 메뉴입니다.` : ''].filter(Boolean);
+  document.getElementById('det-b').innerHTML = `
+    <table><thead><tr><th>영양성분 (1개 기준)</th><th>함량</th><th>1일 기준치 대비</th></tr></thead><tbody>
+      ${row('중량', i.w, 'g')}${row('열량', i.k, 'kcal', DV.k)}${row('단백질', i.p, 'g', DV.p, true)}${row('나트륨', i.na, 'mg', DV.na)}${row('당류', i.s, 'g', DV.s)}${row('포화지방', i.f, 'g', DV.f)}
+    </tbody></table>
+    <div class="det-p">${pcell('매장가', ps, vs, i.ns)}${pcell('배달가', pd, vd, B().dm === 'none' ? '배달가 미공개' : i.nd)}</div>
+    <p class="det-n">${notes.map(esc).join('<br>')}${notes.length ? '<br>' : ''}1일 기준치: 열량 2,000kcal · 단백질 55g · 나트륨 2,000mg · 당류 100g · 포화지방 15g. ${i.cid ? '직접 입력한 값입니다.' : '영양성분은 브랜드 공식 자료, 가격 출처: ' + esc(B().snote) + ' / ' + esc(B().dnote) + '.'}</p>`;
+  if (d.showModal) { if (!d.open) d.showModal(); } else d.setAttribute('open', '');
+}
+const detEl = document.getElementById('det');
+document.getElementById('det-x').onclick = () => detEl.close ? detEl.close() : detEl.removeAttribute('open');
+detEl.addEventListener('click', e => { if (e.target === detEl) detEl.close(); });
+function bindDetail(li, i){
+  li.tabIndex = 0;
+  li.setAttribute('aria-description', '누르면 상세 영양정보');
+  li.addEventListener('click', e => { if (!e.target.closest('button')) showDetail(i); });
+  li.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === li) { e.preventDefault(); showDetail(i); } });
+}
+
+function decItem(i){
+  const k = key(i); const c = cart(); const l = c.find(x => x.k === k); if (!l) return;
+  l.qty--; if (l.qty <= 0) { S.carts[S.brand] = c.filter(x => x !== l); if (S.open === k) S.open = null; }
+  save(); renderMenu(); renderSlip();
+}
+function addItem(i){
+  const c = cart(); const k = key(i); const l = c.find(x => x.k === k);
+  if (l) l.qty++; else c.push({k, qty: 1, dc: {}});
+  save(); renderMenu(); renderSlip();
+}
+
+function renderSlip(){
+  const b = B(), m = mode(); const c = cart().filter(l => itemOf(l.k)); S.carts[S.brand] = c;
+  document.getElementById('store').innerHTML = `${esc(b.name)}<span class="mode">${MODE[m]}</span>`;
+  const ul = document.getElementById('lines'); ul.innerHTML = '';
+  let total = 0, orig = 0, prot = 0, skipped = 0;
+  if (!c.length) ul.innerHTML = '<li class="slip-empty">왼쪽 메뉴의 <b>+</b>를 눌러 먹을 메뉴를 담으세요. 여러 개를 담으면 합계로 계산합니다.</li>';
+  if (S.example && c.length) ul.innerHTML = '<li class="slip-empty" style="padding:8px 0 2px;font-size:12.5px">예시 주문입니다. 지파이는 매장 할인가 3,500원을 넣어 둔 상태예요. 비우기를 누르고 직접 담아 보세요.</li>';
+  c.forEach(l => {
+    const i = itemOf(l.k); const list = priceOf(i); const dc = l.dc[m] ?? null;
+    const unit = dc ?? list; const has = unit != null;
+    if (has) { total += unit * l.qty; orig += (list ?? unit) * l.qty; prot += i.p * l.qty; } else skipped++;
+    const li = document.createElement('li'); li.className = 'ln';
+    const open = S.open === l.k;
+    const btn = dc !== null ? (list == null ? '입력가 ' : '할인 ') + won(dc) : (list == null ? '가격 입력' : '할인');
+    li.innerHTML = `<div class="ln-top"><span class="n">${esc(i.n)}</span>
+        <span class="amt">${dc !== null && list != null ? `<s>${won(list * l.qty)}</s>` : ''}${has ? won(unit * l.qty) : '—'}</span></div>
+      <div class="ln-ctl"><span class="qty"><button type="button" data-a="-" aria-label="수량 줄이기">−</button><span>${l.qty}</span><button type="button" data-a="+" aria-label="수량 늘리기">+</button></span>
+        <button type="button" class="dc ${dc !== null ? 'applied' : ''}" aria-expanded="${open}">${btn}</button>
+        <span>단백질 ${fmt(i.p * l.qty)}g</span></div>
+      ${!has ? `<p class="warn" style="margin:0">${MODE[m]} 가격이 없어 합계에서 뺐습니다. 실제 가격을 알면 <b>가격 입력</b>으로 넣으세요.</p>` : ''}
+      ${open ? `<form class="dcbox"><label for="dc-in">${list == null ? '실제 1개 가격' : '할인된 1개 가격'} (${MODE[m]})</label>
+        <input id="dc-in" type="number" inputmode="numeric" min="0" step="100" value="${dc ?? ''}" placeholder="${list ?? ''}">
+        <span style="font-size:12.5px">원</span><button class="mini" type="submit">적용</button>
+        ${dc !== null ? '<button class="mini ghost" type="button" data-a="reset">취소</button>' : ''}<p class="err" hidden></p></form>` : ''}`;
+    li.querySelector('[data-a="-"]').onclick = () => { l.qty--; if (l.qty <= 0) { S.carts[S.brand] = c.filter(x => x !== l); if (S.open === l.k) S.open = null; } save(); renderSlip(); renderMenu(); };
+    li.querySelector('[data-a="+"]').onclick = () => { l.qty++; save(); renderSlip(); renderMenu(); };
+    li.querySelector('.dc').onclick = () => { S.open = open ? null : l.k; renderSlip(); if (!open) setTimeout(() => document.getElementById('dc-in')?.focus(), 0); };
+    const f = li.querySelector('form');
+    if (f) {
+      f.onsubmit = e => { e.preventDefault(); const v = f.querySelector('input').value.trim(); const err = f.querySelector('.err');
+        const n = Number(v);
+        if (v === '' || !isFinite(n) || n < 0) { err.textContent = '0원 이상 숫자로 입력하세요.'; err.hidden = false; return; }
+        if (list != null && n > list) { err.textContent = `${MODE[m]} 정가(${won(list)})보다 높습니다. 할인된 가격을 입력하세요.`; err.hidden = false; return; }
+        if (list != null && n === list) delete l.dc[m]; else l.dc[m] = Math.round(n);
+        S.open = null; save(); renderSlip(); };
+      const r = f.querySelector('[data-a="reset"]'); if (r) r.onclick = () => { delete l.dc[m]; S.open = null; save(); renderSlip(); };
+    }
+    ul.appendChild(li);
+  });
+  const v = per20(total, prot); const t = c.length && total + prot > 0 ? tier(v) : 'na';
+  const counted = c.filter(l => (l.dc[m] ?? priceOf(itemOf(l.k))) != null);
+  document.getElementById('tot').innerHTML = c.length ? `
+    <dt>메뉴 ${counted.reduce((a,l)=>a+l.qty,0)}개 ${MODE[m]} 정가</dt><dd>${won(orig)}</dd>
+    ${orig !== total ? `<div class="save" style="display:contents"><dt>할인</dt><dd>−${won(orig - total)}</dd></div>` : ''}
+    <dt>결제 금액</dt><dd>${won(total)}</dd><dt>총 단백질</dt><dd>${fmt(prot)}g</dd>
+    ${skipped ? `<dt style="grid-column:1/-1;color:var(--bad)">가격 없는 메뉴 ${skipped}개는 계산에서 뺐습니다</dt>` : ''}` : '';
+  const vd = document.getElementById('verdict'); vd.className = 'verdict ' + t;
+  const est = m === 'dlv' && c.some(l => itemOf(l.k).nd === '추정' && l.dc.dlv == null);
+  if (!c.length) vd.innerHTML = `<span class="lbl">단백질 20g당 가격</span><span class="val">—</span><span class="word">—</span><span class="why">메뉴를 담으면 등급이 나옵니다.</span>`;
+  else if (v === null) vd.innerHTML = `<span class="lbl">단백질 20g당 가격</span><span class="val">계산 불가</span><span class="word">—</span><span class="why">${prot < 1 && total > 0 ? '담은 메뉴의 단백질이 1g 미만입니다.' : '가격이 있는 메뉴가 없습니다.'}</span>`;
+  else vd.innerHTML = `<span class="lbl">단백질 20g당 가격 · ${MODE[m]}${est ? ' (추정가 포함)' : ''}</span><span class="val">${Math.round(v).toLocaleString('ko-KR')}<small>원</small></span><span class="word">${WORD[t]}</span>
+    <span class="why">${rankText(v)}</span>`;
+  document.getElementById('b1').textContent = c.length ? `${MODE[m]} ${won(total)} · 단백질 ${fmt(prot)}g` : '담은 메뉴 없음';
+  const b2 = document.getElementById('b2'); b2.className = 'b2 ' + t; b2.textContent = c.length && v !== null ? WORD[t] + ' · 20g ' + won(v) : '';
+}
+
+// ---------- add / edit form ----------
+const F = id => document.getElementById(id);
+const form = F('cform');
+F('cf-brand').innerHTML = BRANDS.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+function syncFormBrand(){
+  const bid = F('cf-brand').value; F('cf-store-w').hidden = bid !== 'etc';
+  const b = BRANDS.find(x => x.id === bid);
+  F('cf-cats').innerHTML = [...new Set(itemsOf(b).map(i => i.c))].map(c => `<option value="${esc(c)}">`).join('');
+}
+F('cf-brand').onchange = syncFormBrand;
+function openForm(m){
+  S.edit = m ? m.id : null; F('cf-err').hidden = true;
+  F('cf-title').textContent = m ? '직접 추가한 메뉴 수정' : '메뉴 직접 추가';
+  F('cf-brand').value = m ? m.brand : S.brand;
+  const v = (id, x) => F(id).value = x ?? '';
+  v('cf-store', m?.store); v('cf-cat', m?.c); v('cf-name', m?.n); v('cf-ps', m?.ps); v('cf-pd', m?.pd); v('cf-p', m?.p);
+  v('cf-k', m?.k); v('cf-na', m?.na); v('cf-s', m?.s); v('cf-f', m?.f); v('cf-w', m?.w);
+  syncFormBrand(); form.hidden = false; F('cf-name').focus();
+}
+F('addOpen').onclick = () => form.hidden ? openForm(null) : (form.hidden = true);
+F('cf-cancel').onclick = () => { form.hidden = true; S.edit = null; };
+form.onsubmit = async e => {
+  e.preventDefault();
+  const err = F('cf-err'); const fail = msg => { err.textContent = msg; err.hidden = false; };
+  const num = id => { const s = F(id).value.trim(); if (s === '') return null; const n = Number(s); return isFinite(n) && n >= 0 ? n : NaN; };
+  const brand = F('cf-brand').value, name = F('cf-name').value.trim(), store = F('cf-store').value.trim();
+  const ps = num('cf-ps'), pd = num('cf-pd'), p = num('cf-p');
+  const opt = ['cf-k','cf-na','cf-s','cf-f','cf-w'].map(num);
+  if (!name) return fail('메뉴 이름을 입력하세요.');
+  if (brand === 'etc' && !store) return fail('기타 매장은 매장 이름을 입력하세요.');
+  if ([ps, pd, p, ...opt].some(x => Number.isNaN(x))) return fail('숫자 칸에는 0 이상의 숫자만 넣을 수 있습니다.');
+  if (ps == null && pd == null) return fail('매장가나 배달가 중 하나는 입력하세요.');
+  if (p == null) return fail('단백질(g)을 입력하세요. 등급 계산에 꼭 필요합니다.');
+  const m = { type:'menu', id: S.edit || ('m' + Date.now().toString(36) + Math.random().toString(36).slice(2,6)), brand, n: name,
+    c: F('cf-cat').value.trim() || '직접 추가', ps: ps == null ? null : Math.round(ps), pd: pd == null ? null : Math.round(pd), p,
+    k: opt[0], na: opt[1], s: opt[2], f: opt[3], w: opt[4] };
+  if (brand === 'etc') m.store = store;
+  F('cf-save').disabled = true;
+  try { await putCustom(m); form.hidden = true; S.edit = null; S.brand = brand; S.cat = '전체'; save(); renderAll(); }
+  catch (x) { fail(x && x.code === 'quota_exceeded' ? '저장 공간이 가득 찼습니다. 안 쓰는 메뉴를 지운 뒤 다시 시도하세요.' : '저장하지 못했습니다. 잠시 후 다시 시도하세요.'); }
+  finally { F('cf-save').disabled = false; }
+};
+
+
+// ---------- backup: export / import custom menus (device-only storage in the installed app) ----------
+F('exp').onclick = () => {
+  if (!CUSTOM.length) { F('bkmsg').textContent = '내보낼 메뉴가 없습니다. 먼저 메뉴를 직접 추가하세요.'; return; }
+  const blob = new Blob([JSON.stringify({app:'protein20', version:1, exported:new Date().toISOString(), menus:CUSTOM}, null, 1)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'protein20-my-menus-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  F('bkmsg').textContent = `메뉴 ${CUSTOM.length}개를 파일로 내보냈습니다.`;
+};
+F('impb').onclick = () => F('imp').click();
+F('imp').onchange = async e => {
+  const file = e.target.files[0]; e.target.value = ''; if (!file) return;
+  try {
+    const j = JSON.parse(await file.text()); const list = Array.isArray(j) ? j : j.menus;
+    const ok = (list || []).filter(m => m && m.type === 'menu' && m.id && m.n && typeof m.p === 'number' && BRANDS.some(b => b.id === m.brand));
+    if (!ok.length) { F('bkmsg').textContent = '가져올 메뉴를 찾지 못했습니다. 이 앱에서 내보낸 파일인지 확인하세요.'; return; }
+    for (const m of ok) { const i = CUSTOM.findIndex(x => x.id === m.id); if (i >= 0) CUSTOM[i] = m; else CUSTOM.push(m); }
+    saveLocal(); renderAll(); F('bkmsg').textContent = `메뉴 ${ok.length}개를 가져왔습니다.`;
+  } catch { F('bkmsg').textContent = '파일을 읽지 못했습니다. 이 앱에서 내보낸 .json 파일을 선택하세요.'; }
+};
+
+function renderAll(){
+  renderBrands();
+  document.getElementById('src').textContent = B().id === 'etc' ? '기타 매장 메뉴는 직접 입력한 값으로 계산합니다.' : '영양성분 출처는 브랜드 공식 자료 · 가격 출처: ' + B().snote + ' / ' + B().dnote + ' · 2026년 10월 확인';
+  renderMode(); renderTabs(); renderMenu(); renderSlip(); setStat();
+}
+document.getElementById('q').oninput = e => { S.q = e.target.value; renderMenu(); };
+document.getElementById('sort').onchange = e => { S.sort = e.target.value; renderMenu(); };
+document.getElementById('clear').onclick = () => { S.carts[S.brand] = []; S.open = null; save(); renderSlip(); renderMenu(); };
+renderAll();
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+</script>
+
+</body>
+</html>
