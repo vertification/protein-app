@@ -268,7 +268,7 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
       <p class="src" id="cstat"></p>
       <div class="crow" id="bk"><button class="btn sub" type="button" id="exp">내 메뉴 내보내기</button><button class="btn sub" type="button" id="impb">가져오기</button><input type="file" id="imp" accept=".json,application/json" hidden><span class="hint" id="bkmsg"></span></div>
       <p class="src" id="src"></p>
-      <p class="src">앱 버전 2026.10.27g</p>
+      <p class="src">앱 버전 2026.10.27h</p>
     </section>
 
     <aside class="slip" id="slip" aria-labelledby="s3">
@@ -572,13 +572,13 @@ function renderSlip(){
   tot.innerHTML = c.length ? `
     <dt>메뉴 ${counted.reduce((a,l)=>a+l.qty,0)}개 ${MODE[m]} 정가</dt><dd>${won(orig)}</dd>
     ${orig !== itemTotal ? `<div class="save" style="display:contents"><dt>메뉴별 할인</dt><dd>−${won(orig - itemTotal)}</dd></div>` : ''}
-    ${po ? `<div class="save" style="display:contents"><dt>묶음·결제 할인</dt><dd>−${won(itemTotal - total)}</dd></div>` : ''}
+    ${po ? (total <= itemTotal ? `<div class="save" style="display:contents"><dt>묶음·결제 할인</dt><dd>−${won(itemTotal - total)}</dd></div>` : `<dt>추가 금액 (배달비·포장비 등)</dt><dd>+${won(total - itemTotal)}</dd>`) : ''}
     <dt>결제 금액 <button type="button" class="dc ${po ? 'applied' : ''}" id="payBtn" aria-expanded="${!!S.payOpen}" style="margin-left:6px">${po ? '직접 입력함' : '직접 입력'}</button></dt><dd>${won(total)}</dd>
     ${S.payOpen ? `<form class="dcbox" id="payForm" style="grid-column:1/-1"><label for="pay-in">실제 결제 금액 (${MODE[m]}, 전체)</label>
       <input id="pay-in" type="number" inputmode="numeric" min="0" step="10" value="${po ? po.v : ''}" placeholder="${itemTotal}">
       <span style="font-size:12.5px">원</span><button class="mini" type="submit">적용</button>
       ${po ? '<button class="mini ghost" type="button" id="payReset">취소</button>' : ''}
-      <p class="err" hidden></p><p style="flex-basis:100%;margin:0;font-size:12px;color:var(--muted)">2+1·묶음 할인처럼 메뉴별로 나누기 어려운 할인은 영수증의 최종 금액을 넣으세요. 메뉴나 수량을 바꾸면 다시 계산 금액으로 돌아갑니다.</p></form>` : ''}
+      <p class="err" hidden></p><p style="flex-basis:100%;margin:0;font-size:12px;color:var(--muted)">2+1·묶음 할인이나 배달비처럼 메뉴별로 나누기 어려운 금액은 영수증의 최종 금액을 넣으세요. 계산된 금액보다 높아도 됩니다. 메뉴나 수량을 바꾸면 다시 계산 금액으로 돌아갑니다.</p></form>` : ''}
     <dt>총 단백질</dt><dd>${fmt(prot)}g</dd>
     ${skipped ? `<dt style="grid-column:1/-1;color:var(--bad)">가격 없는 메뉴 ${skipped}개는 계산에서 뺐습니다</dt>` : ''}` : '';
   if (c.length) {
@@ -587,7 +587,6 @@ function renderSlip(){
     if (pf) {
       pf.onsubmit = e => { e.preventDefault(); const raw = pf.querySelector('input').value.trim(); const n = Number(raw); const err = pf.querySelector('.err');
         if (raw === '' || !isFinite(n) || n < 0) { err.textContent = '0원 이상 숫자로 입력하세요.'; err.hidden = false; return; }
-        if (n > itemTotal) { err.textContent = `계산된 금액(${won(itemTotal)})보다 높습니다. 할인된 최종 금액을 넣으세요.`; err.hidden = false; return; }
         if (Math.round(n) === itemTotal) delete pb[m]; else pb[m] = {v: Math.round(n), sig};
         S.payOpen = false; save(); renderSlip(); };
       const pr = tot.querySelector('#payReset'); if (pr) pr.onclick = () => { delete pb[m]; S.payOpen = false; save(); renderSlip(); };
