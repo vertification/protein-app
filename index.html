@@ -212,6 +212,30 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
 .det table.nut-items td{font-size:12.5px}
 .det table.nut-items td:first-child{white-space:normal;max-width:150px}
 .det-sub{margin:0;font-size:13px;font-weight:600}
+.health{margin:0 12px 10px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:var(--surface)}
+.health .hh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.health .hl{font-size:12px;color:var(--muted)}
+.hpill{display:inline-block;font:600 12px var(--body);padding:2px 9px;border-radius:999px}
+.hpill.good{color:var(--good);background:var(--good-bg)} .hpill.ok{color:var(--soso);background:var(--soso-bg)} .hpill.bad{color:var(--bad);background:var(--bad-bg)}
+.hchk{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px;font-size:12.5px}
+.hchk li{display:flex;gap:6px;align-items:baseline}
+.hchk .d{width:8px;height:8px;border-radius:50%;flex:none;transform:translateY(-1px)}
+.hchk .d.good{background:var(--good)} .hchk .d.ok{background:var(--soso)} .hchk .d.bad{background:var(--bad)}
+.hchk b{font-weight:600}
+.hnote{font-size:11.5px;color:var(--muted);margin:0}
+.det-h2{background:var(--sunk);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.prof{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:13.5px}
+.prof b{font-family:var(--mono);font-weight:600}
+.prof .pl{color:var(--muted)}
+.prof .ghostbtn{padding:5px 10px;font-size:13px}
+.pform{display:flex;flex-direction:column;gap:12px}
+.pform .cgrid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+.pform .seg2{display:flex;gap:6px;flex-wrap:wrap}
+.pform .seg2 label{flex-direction:row;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--ink);font-size:13.5px;cursor:pointer}
+.pform .seg2 input{width:auto}
+.pform .cgrid label.wide{grid-column:1/-1}
+.pres{background:var(--sunk);border-radius:8px;padding:10px 12px;font-size:13.5px;display:flex;flex-direction:column;gap:3px}
+.pres b{font-family:var(--mono)}
 .det-n{font-size:12px;color:var(--muted);margin:0;line-height:1.6}
 </style>
 </head>
@@ -226,6 +250,7 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
     </div>
     <div><div class="thresh" id="thresh"></div><p class="basis" id="basis"></p></div>
   </header>
+  <section class="prof" id="prof" aria-label="내 몸 기준"></section>
 
   <section aria-labelledby="s1">
     <p class="step" id="s1">1 · 매장 선택</p>
@@ -275,7 +300,7 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
       <p class="src" id="cstat"></p>
       <div class="crow" id="bk"><button class="btn sub" type="button" id="exp">내 메뉴 내보내기</button><button class="btn sub" type="button" id="impb">가져오기</button><input type="file" id="imp" accept=".json,application/json" hidden><span class="hint" id="bkmsg"></span></div>
       <p class="src" id="src"></p>
-      <p class="src">앱 버전 2026.10.27i</p>
+      <p class="src">앱 버전 2026.10.28b</p>
     </section>
 
     <aside class="slip" id="slip" aria-labelledby="s3">
@@ -286,13 +311,39 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
       <ul class="lines" id="lines"></ul>
       <dl class="tot" id="tot"></dl>
       <div class="verdict" id="verdict" aria-live="polite"></div>
-      <button class="nutbtn" id="nutBtn" type="button" hidden>영양성분 합계 보기</button>
+      <div class="health" id="health" hidden></div>
+      <button class="nutbtn" id="nutBtn" type="button" hidden>영양성분 합계·건강 등급 자세히</button>
     </aside>
   </div>
 </div>
 
 <div class="bar" id="bar" aria-hidden="true"><div><div class="b1" id="b1"></div><a href="#slip">주문서 보기</a></div><div class="b2" id="b2"></div></div>
 
+<dialog class="det" id="profDlg" aria-labelledby="pf-t">
+  <div class="det-h"><div><h3 id="pf-t">내 몸 기준 설정</h3><p>입력하면 열량·단백질 기준이 내 몸에 맞게 바뀝니다. 이 기기에만 저장됩니다.</p></div><button class="det-x" type="button" id="pf-x" aria-label="닫기">×</button></div>
+  <form class="det-b pform" id="pform" novalidate>
+    <div class="cgrid">
+      <label>성별<span class="seg2"><label><input type="radio" name="pf-sex" value="m" checked>남</label><label><input type="radio" name="pf-sex" value="f">여</label></span></label>
+      <label><span class="req">나이</span><input id="pf-age" type="number" inputmode="numeric" min="15" max="100"></label>
+      <label><span class="req">키 (cm)</span><input id="pf-h" type="number" inputmode="decimal" min="120" max="220" step="0.1"></label>
+      <label><span class="req">몸무게 (kg)</span><input id="pf-w" type="number" inputmode="decimal" min="30" max="250" step="0.1"></label>
+      <label class="wide">활동량<select id="pf-act">
+        <option value="1.2">거의 안 움직임 (사무직, 운동 안 함)</option>
+        <option value="1.375">가벼움 (주 1~3회 운동)</option>
+        <option value="1.55" selected>보통 (주 3~5회 운동)</option>
+        <option value="1.725">많음 (주 6~7회 운동)</option>
+        <option value="1.9">매우 많음 (하루 2번 운동·육체노동)</option></select></label>
+      <label class="wide">목표<select id="pf-goal">
+        <option value="keep">체중 유지</option>
+        <option value="cut">감량 (열량 −15%)</option>
+        <option value="bulk">근육 증가 (열량 +10%)</option></select></label>
+    </div>
+    <div class="pres" id="pf-res"></div>
+    <p class="cerr" id="pf-err" hidden></p>
+    <div class="crow"><button class="btn" type="submit">저장</button><button class="btn sub" type="button" id="pf-clear">일반 성인 기준으로 되돌리기</button></div>
+    <p class="det-n">하루 열량은 Mifflin-St Jeor 공식으로 구한 기초대사량에 활동량을 곱해 추정합니다. 단백질 목표는 체중 1kg당 유지 1.0g · 감량 1.6g · 근육 증가 1.8g입니다. 근육량이나 질환은 반영하지 못하는 추정값이며, 나트륨 기준(하루 2,000mg)은 체형과 관계없이 같습니다.</p>
+  </form>
+</dialog>
 <dialog class="det" id="det" aria-labelledby="det-t">
   <div class="det-h"><div><h3 id="det-t"></h3><p id="det-s"></p></div><button class="det-x" type="button" id="det-x" aria-label="닫기">×</button></div>
   <div class="det-b" id="det-b"></div>
@@ -478,8 +529,89 @@ function renderMenu(){
 
 
 // ---------- detail dialog (click / Enter on a menu row) ----------
-const DV = {k:2000, p:55, na:2000, s:100, f:15}; // 한국 1일 영양성분 기준치
+const DV = {k:2000, p:55, na:2000, s:100, f:15}; // 한국 1일 영양성분 기준치 (내 몸 기준 설정 시 열량·단백질·당류·포화지방이 바뀜)
+const DV0 = {...DV};
+// ---------- 내 몸 기준 ----------
+const GOAL = {keep:{n:'체중 유지', m:1, pk:1.0}, cut:{n:'감량', m:0.85, pk:1.6}, bulk:{n:'근육 증가', m:1.1, pk:1.8}};
+let PROF = null; try { PROF = JSON.parse(localStorage.getItem('p20prof') || 'null'); } catch {}
+function calcProf(p){
+  const bmr = 10 * p.w + 6.25 * p.h - 5 * p.age + (p.sex === 'f' ? -161 : 5);
+  const g = GOAL[p.goal] || GOAL.keep;
+  const kcal = Math.round(bmr * p.act * g.m / 10) * 10;
+  return {bmr: Math.round(bmr), kcal, prot: Math.round(p.w * g.pk)};
+}
+function applyProf(){
+  if (PROF) { const r = calcProf(PROF); DV.k = r.kcal; DV.p = r.prot; DV.s = Math.round(DV0.s * r.kcal / 2000); DV.f = Math.round(DV0.f * r.kcal / 2000); }
+  else Object.assign(DV, DV0);
+}
+applyProf();
+const dvText = () => `1일 기준치${PROF ? '(내 몸 기준)' : ''}: 열량 ${DV.k.toLocaleString('ko-KR')}kcal · 단백질 ${DV.p}g · 나트륨 2,000mg · 당류 ${DV.s}g · 포화지방 ${DV.f}g.`;
+function renderProf(){
+  const el = document.getElementById('prof');
+  if (PROF) { const g = GOAL[PROF.goal] || GOAL.keep;
+    el.innerHTML = `<span class="pl">내 몸 기준 · ${PROF.sex === 'f' ? '여' : '남'} ${PROF.age}세 ${PROF.h}cm ${PROF.w}kg · ${g.n}</span><span>하루 <b>${DV.k.toLocaleString('ko-KR')}kcal</b> · 단백질 <b>${DV.p}g</b> · 한 끼 단백질 <b>${Math.round(DV.p / 3)}g</b></span><button class="ghostbtn" type="button" id="profOpen">수정</button>`;
+  } else el.innerHTML = `<span class="pl">영양 기준: 일반 성인(하루 2,000kcal · 단백질 55g)</span><button class="ghostbtn" type="button" id="profOpen">+ 내 몸 기준 설정</button>`;
+  document.getElementById('profOpen').onclick = openProf;
+}
+const pf = id => document.getElementById(id);
+function readProf(){
+  const p = {sex: document.querySelector('input[name="pf-sex"]:checked').value, age: Number(pf('pf-age').value), h: Number(pf('pf-h').value), w: Number(pf('pf-w').value), act: Number(pf('pf-act').value), goal: pf('pf-goal').value};
+  const ok = p.age >= 15 && p.age <= 100 && p.h >= 120 && p.h <= 220 && p.w >= 30 && p.w <= 250;
+  return ok ? p : null;
+}
+function profPreview(){
+  const p = readProf(); const box = pf('pf-res');
+  if (!p) { box.innerHTML = '나이·키·몸무게를 넣으면 기준이 계산됩니다.'; return; }
+  const r = calcProf(p);
+  box.innerHTML = `<span>기초대사량 <b>${r.bmr.toLocaleString('ko-KR')}kcal</b></span><span>하루 목표 열량 <b>${r.kcal.toLocaleString('ko-KR')}kcal</b> · 한 끼 약 <b>${Math.round(r.kcal / 3).toLocaleString('ko-KR')}kcal</b></span><span>하루 단백질 목표 <b>${r.prot}g</b> · 한 끼 약 <b>${Math.round(r.prot / 3)}g</b></span>`;
+}
+function openProf(){
+  const d = pf('profDlg'); pf('pf-err').hidden = true;
+  const p = PROF || {sex:'m', age:'', h:'', w:'', act:1.55, goal:'keep'};
+  document.querySelector(`input[name="pf-sex"][value="${p.sex}"]`).checked = true;
+  pf('pf-age').value = p.age; pf('pf-h').value = p.h; pf('pf-w').value = p.w; pf('pf-act').value = String(p.act); pf('pf-goal').value = p.goal;
+  profPreview(); if (d.showModal) d.showModal(); else d.setAttribute('open', '');
+}
+const closeProf = () => { const d = pf('profDlg'); d.close ? d.close() : d.removeAttribute('open'); };
+pf('pform').addEventListener('input', profPreview);
+pf('pform').onsubmit = e => { e.preventDefault(); const p = readProf();
+  if (!p) { pf('pf-err').textContent = '나이 15~100세, 키 120~220cm, 몸무게 30~250kg 범위로 넣어 주세요.'; pf('pf-err').hidden = false; return; }
+  PROF = p; try { localStorage.setItem('p20prof', JSON.stringify(p)); } catch {} applyProf(); closeProf(); renderProf(); renderAll(); };
+pf('pf-clear').onclick = () => { PROF = null; try { localStorage.removeItem('p20prof'); } catch {} applyProf(); closeProf(); renderProf(); renderAll(); };
+pf('pf-x').onclick = closeProf;
+
 const dlvPrice = i => B().dm === 'none' ? null : (i.cid && i.pd == null && B().dm === 'same') ? i.ps : i.pd;
+// ---------- 건강 등급 (일반 성인 기준, 의학적 판단 아님) ----------
+const HW = {good:'좋음', ok:'보통', bad:'주의'};
+const hv = v => v !== '' && v != null && isFinite(v);
+function health(n, order){
+  const C = []; const k = hv(n.k) && n.k > 0 ? n.k : null;
+  const add = (name, g, txt) => C.push({name, g, txt});
+  if (k && hv(n.p)) { const r = n.p * 4 / k * 100;
+    add('단백질 효율', r >= 25 ? 'good' : r >= 12 ? 'ok' : 'bad', `열량의 ${Math.round(r)}%가 단백질 (좋음 25% 이상 · 주의 12% 미만)`); }
+  if (hv(n.na)) { const v = n.na;
+    add('나트륨', v <= 1000 ? 'good' : v <= 1500 ? 'ok' : 'bad', `${fmt(v)}mg · 하루 기준 2,000mg의 ${Math.round(v / 20)}% (좋음 1,000mg 이하 · 주의 1,500mg 초과)`); }
+  if (k && hv(n.s)) { const r = n.s * 4 / k * 100;
+    add('당류', r <= 10 ? 'good' : r <= 15 ? 'ok' : 'bad', `${fmt(n.s)}g · 열량의 ${Math.round(r)}% (좋음 10% 이하 · 주의 15% 초과)`); }
+  if (k && hv(n.f)) { const r = n.f * 9 / k * 100;
+    add('포화지방', r <= 10 ? 'good' : r <= 15 ? 'ok' : 'bad', `${fmt(n.f)}g · 열량의 ${Math.round(r)}% (좋음 10% 이하 · 주의 15% 초과)`); }
+  const meal = DV.k / 3, lo = Math.round(meal * 0.6 / 10) * 10, hi = Math.round(meal * 1.35 / 10) * 10, over = Math.round(meal * 1.8 / 10) * 10;
+  if (order && k) add('열량', k > over ? 'bad' : (k >= lo && k <= hi) ? 'good' : 'ok',
+    `${fmt(k)}kcal ${k > over ? '· 한 끼로 많은 편' : k < lo ? '· 한 끼로는 적은 편(간식이면 괜찮음)' : k > hi ? '· 한 끼로 조금 많은 편' : '· 한 끼로 적당'} (${PROF ? '내 한 끼 ' + Math.round(meal).toLocaleString('ko-KR') + 'kcal 기준 · ' : ''}좋음 ${lo.toLocaleString('ko-KR')}~${hi.toLocaleString('ko-KR')}kcal · 주의 ${over.toLocaleString('ko-KR')}kcal 초과)`);
+  if (order && PROF && hv(n.p)) { const goal = DV.p / 3, r = n.p / goal * 100;
+    add('단백질 양', r >= 80 ? 'good' : r >= 50 ? 'ok' : 'bad', `${fmt(n.p)}g · 내 한 끼 목표 ${Math.round(goal)}g의 ${Math.round(r)}% (좋음 80% 이상)`); }
+  if (C.length < 2) return null;
+  const pts = C.reduce((a, c) => a + (c.g === 'good' ? 2 : c.g === 'ok' ? 1 : 0), 0) / C.length;
+  const bad = C.filter(c => c.g === 'bad').length;
+  const g = bad >= 2 || pts < 0.8 ? 'bad' : (!bad && pts >= 1.6) ? 'good' : 'ok';
+  return {g, C};
+}
+function healthHTML(h, title){
+  const sum = h.C.filter(c => c.g !== 'good').map(c => c.name + (c.g === 'bad' ? ' 높음' : ' 보통')).map(t => t.replace('단백질 효율 높음','단백질 효율 낮음').replace('열량 높음', '열량 많음')).join(' · ');
+  return `<div class="hh"><span class="hl">${title}</span><span class="hpill ${h.g}">${HW[h.g]}</span><span class="hl">${esc(sum || '모든 항목 좋음')}</span></div>
+    <ul class="hchk">${h.C.map(c => `<li><span class="d ${c.g}"></span><span><b>${c.name}</b> ${HW[c.g]} — ${esc(c.txt)}</span></li>`).join('')}</ul>
+    <p class="hnote">${PROF ? '내 몸 기준(추정)' : '일반 성인 기준'} 참고용이며 의학적 판단이 아닙니다. 식이섬유·탄수화물·가공 정도는 반영하지 못했습니다. 기준: WHO·한국인 영양소 섭취기준의 권장 상한(나트륨 하루 2,000mg, 당류·포화지방 열량 10% 미만)을 '좋음'의 경계로 두고, 외식 현실을 반영해 '주의'는 그보다 여유 있게 잡았습니다.</p>`;
+}
 function showNutrition(){
   const c = cart().filter(l => itemOf(l.k)); if (!c.length) return;
   const d = document.getElementById('det'); const K = ['k','p','na','s','f'];
@@ -498,9 +630,10 @@ function showNutrition(){
     <table><thead><tr><th>영양성분 (주문 전체)</th><th>합계</th><th>1일 기준치 대비</th></tr></thead><tbody>
       ${row('열량','k','kcal')}${row('단백질','p','g',true)}${row('나트륨','na','mg')}${row('당류','s','g')}${row('포화지방','f','g')}
     </tbody></table>
+    ${(() => { const h = health(sum, true); return h ? `<div class="det-h2">${healthHTML(h, '주문 건강 등급')}</div>` : ''; })()}
     <p class="det-sub">메뉴별 <span style="font-weight:400;font-size:12px;color:var(--muted)">· 표가 잘리면 옆으로 밀어 보세요</span></p>
     <div class="nut-wrap"><table class="nut-items"><thead><tr><th>메뉴</th><th>열량(kcal)</th><th>단백질</th><th>나트륨(mg)</th><th>당류</th><th>포화지방</th></tr></thead><tbody>${items}</tbody></table></div>
-    <p class="det-n">${missN ? '“일부 없음”은 직접 추가하면서 비워 둔 값이라 합계에서 빠진 항목입니다.<br>' : ''}담은 수량만큼 곱해 더한 값입니다. 1일 기준치: 열량 2,000kcal · 단백질 55g · 나트륨 2,000mg · 당류 100g · 포화지방 15g. 각 메뉴 값은 메뉴를 누르면 나오는 상세 영양정보와 같은 자료입니다.</p>`;
+    <p class="det-n">${missN ? '“일부 없음”은 직접 추가하면서 비워 둔 값이라 합계에서 빠진 항목입니다.<br>' : ''}담은 수량만큼 곱해 더한 값입니다. ${dvText()} 각 메뉴 값은 메뉴를 누르면 나오는 상세 영양정보와 같은 자료입니다.</p>`;
   if (d.showModal) { if (!d.open) d.showModal(); } else d.setAttribute('open', '');
 }
 document.getElementById('nutBtn').onclick = showNutrition;
@@ -522,9 +655,10 @@ function showDetail(i){
     <table><thead><tr><th>영양성분 (1개 기준)</th><th>함량</th><th>1일 기준치 대비</th></tr></thead><tbody>
       ${row(i.u === 'mL' ? '용량' : '중량', i.w, i.u || 'g')}${row('열량', i.k, 'kcal', DV.k)}${row('단백질', i.p, 'g', DV.p, true)}${row('나트륨', i.na, 'mg', DV.na)}${row('당류', i.s, 'g', DV.s)}${row('포화지방', i.f, 'g', DV.f)}
     </tbody></table>
+    ${(() => { const h = health(i, false); return h ? `<div class="det-h2">${healthHTML(h, '건강 등급')}</div>` : ''; })()}
     ${i.pt ? ptBlock(i.pt) : ''}
     <div class="det-p">${pcell('매장가', ps, vs, i.ns)}${pcell('배달가', pd, vd, B().dm === 'none' ? '배달가 미공개' : i.nd)}</div>
-    <p class="det-n">${notes.map(esc).join('<br>')}${notes.length ? '<br>' : ''}1일 기준치: 열량 2,000kcal · 단백질 55g · 나트륨 2,000mg · 당류 100g · 포화지방 15g. ${i.cid ? '직접 입력한 값입니다.' : '영양성분: ' + esc(B().nsrc || '브랜드 공식 자료') + ', 가격 출처: ' + esc(B().snote) + ' / ' + esc(B().dnote) + '.'}</p>`;
+    <p class="det-n">${notes.map(esc).join('<br>')}${notes.length ? '<br>' : ''}${dvText()} ${i.cid ? '직접 입력한 값입니다.' : '영양성분: ' + esc(B().nsrc || '브랜드 공식 자료') + ', 가격 출처: ' + esc(B().snote) + ' / ' + esc(B().dnote) + '.'}</p>`;
   if (d.showModal) { if (!d.open) d.showModal(); } else d.setAttribute('open', '');
 }
 const detEl = document.getElementById('det');
@@ -612,6 +746,7 @@ function renderSlip(){
       ${po ? '<button class="mini ghost" type="button" id="payReset">취소</button>' : ''}
       <p class="err" hidden></p><p style="flex-basis:100%;margin:0;font-size:12px;color:var(--muted)">2+1·묶음 할인이나 배달비처럼 메뉴별로 나누기 어려운 금액은 영수증의 최종 금액을 넣으세요. 계산된 금액보다 높아도 됩니다. 메뉴나 수량을 바꾸면 다시 계산 금액으로 돌아갑니다.</p></form>` : ''}
     <dt>총 단백질</dt><dd>${fmt(prot)}g</dd>
+    ${PROF ? `<dt>내 한 끼 단백질 목표(${Math.round(DV.p / 3)}g) 대비</dt><dd>${Math.round(prot / (DV.p / 3) * 100)}%</dd>` : ''}
     ${skipped ? `<dt style="grid-column:1/-1;color:var(--bad)">가격 없는 메뉴 ${skipped}개는 계산에서 뺐습니다</dt>` : ''}` : '';
   if (c.length) {
     tot.querySelector('#payBtn').onclick = () => { S.payOpen = !S.payOpen; renderSlip(); if (S.payOpen) setTimeout(() => document.getElementById('pay-in')?.focus(), 0); };
@@ -631,6 +766,11 @@ function renderSlip(){
   else vd.innerHTML = `<span class="lbl">단백질 20g당 가격 · ${MODE[m]}${est ? ' (추정가 포함)' : ''}${po ? ' · 입력 금액' : ''}</span><span class="val">${Math.round(v).toLocaleString('ko-KR')}<small>원</small></span><span class="word">${WORD[t]}</span>
     <span class="why">${rankText(v)}</span>`;
   document.getElementById('nutBtn').hidden = !c.length;
+  { const he = document.getElementById('health'); const n = {k:0,p:0,na:0,s:0,f:0}; const miss = {};
+    c.forEach(l => { const i = itemOf(l.k); ['k','p','na','s','f'].forEach(x => { if (hv(i[x])) n[x] += i[x] * l.qty; else miss[x] = 1; }); });
+    Object.keys(miss).forEach(x => { if (x !== 'p') n[x] = null; });
+    const h = c.length ? health(n, true) : null; he.hidden = !h;
+    if (h) he.innerHTML = healthHTML(h, '건강 등급').replace(/<ul class="hchk">[\s\S]*?<\/ul>/, '').replace(/<p class="hnote">[\s\S]*?<\/p>/, '<p class="hnote">' + (PROF ? '내 몸 기준' : '일반 성인 기준') + ' 참고용 · 항목별 이유는 아래 버튼</p>'); }
   document.getElementById('b1').textContent = c.length ? `${MODE[m]} ${won(total)} · 단백질 ${fmt(prot)}g` : '담은 메뉴 없음';
   const b2 = document.getElementById('b2'); b2.className = 'b2 ' + t; b2.textContent = c.length && v !== null ? WORD[t] + ' · 20g ' + won(v) : '';
 }
@@ -707,6 +847,7 @@ function renderAll(){
 document.getElementById('q').oninput = e => { S.q = e.target.value; renderMenu(); };
 document.getElementById('sort').onchange = e => { S.sort = e.target.value; renderMenu(); };
 document.getElementById('clear').onclick = () => { S.carts[S.brand] = []; S.open = null; save(); renderSlip(); renderMenu(); };
+renderProf();
 renderAll();
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
 </script>
