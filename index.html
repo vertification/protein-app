@@ -135,7 +135,20 @@ h1 em{font-style:normal;color:var(--accent)}
 @media (max-width:900px){.bar{gap:8px}}
 .bar .b1{font:600 clamp(10px,3vw,14px) var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bar .b2{font-family:var(--display);font-size:clamp(14px,4.3vw,22px);white-space:nowrap;flex:none}
-.bar a{color:inherit;font-size:13px;text-decoration:underline}
+.bar{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.bar>*{pointer-events:none}
+dialog.sheet{border:0;padding:0;margin:0;width:100%;max-width:100%;height:100%;max-height:100%;background:var(--bg);color:var(--ink);overflow:auto;overscroll-behavior:contain}
+dialog.sheet::backdrop{background:rgba(10,16,13,.45)}
+.sheet-h{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;background:var(--bg);border-bottom:1px solid var(--line);font-family:var(--display);font-size:20px}
+.sheet-h b{font-weight:400}
+#slipHost{padding:12px 16px calc(24px + env(safe-area-inset-bottom,0px))}
+#slipHost .slip{position:static}
+@media (min-width:901px){dialog.sheet{width:min(460px,100%);height:auto;max-height:90vh;margin:auto;border-radius:12px}}
+.bar .blink{font-size:13px;text-decoration:underline}
+.ln-b{display:flex;align-items:center;gap:6px;padding:10px 0 2px;font:600 13px var(--body);color:var(--muted);border-bottom:0!important}
+.ln-b .dot{width:9px;height:9px;border-radius:50%}
+.ghostbtn.clr{border-color:var(--bad);color:var(--bad)}
+.ghostbtn.clr:disabled{border-color:var(--line);color:var(--muted);cursor:default}
 .bar .b2.good{color:var(--good-bg)} .bar .b2.soso{color:var(--soso-bg)} .bar .b2.bad{color:var(--bad-bg)}
 @media (prefers-reduced-motion:no-preference){.verdict{transition:background .2s}}
 .modebar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:10px}
@@ -257,6 +270,7 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
     <div class="brands" id="brands" role="group" aria-label="매장"></div>
     <div class="modebar">
       <div class="seg" role="group" aria-label="주문 방식"><button type="button" id="m-store">매장</button><button type="button" id="m-dlv">배달</button></div>
+      <button type="button" class="ghostbtn clr" id="clearTop">주문서 비우기</button>
       <p class="mnote" id="mnote"></p>
     </div>
   </section>
@@ -300,12 +314,12 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
       <p class="src" id="cstat"></p>
       <div class="crow" id="bk"><button class="btn sub" type="button" id="exp">내 메뉴 내보내기</button><button class="btn sub" type="button" id="impb">가져오기</button><input type="file" id="imp" accept=".json,application/json" hidden><span class="hint" id="bkmsg"></span></div>
       <p class="src" id="src"></p>
-      <p class="src">앱 버전 2026.10.28b</p>
+      <p class="src">앱 버전 2026.10.29b</p>
     </section>
 
     <aside class="slip" id="slip" aria-labelledby="s3">
       <div class="slip-h">
-        <div><p class="step" id="s3" style="margin:0 0 2px">3 · 최종 선택</p><h2>주문서</h2></div>
+        <div><p class="step" id="s3" style="margin:0 0 2px">3 · 최종 선택</p><h2>전체 주문서</h2></div>
         <div style="text-align:right"><div class="store" id="store"></div><button class="clear" id="clear" type="button">비우기</button></div>
       </div>
       <ul class="lines" id="lines"></ul>
@@ -317,7 +331,8 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
   </div>
 </div>
 
-<div class="bar" id="bar" aria-hidden="true"><div><div class="b1" id="b1"></div><a href="#slip">주문서 보기</a></div><div class="b2" id="b2"></div></div>
+<dialog class="sheet" id="slipDlg" aria-label="전체 주문서"><div class="sheet-h"><b>전체 주문서</b><button class="det-x" type="button" id="slipX" aria-label="닫기">×</button></div><div id="slipHost"></div></dialog>
+<div class="bar" id="bar" role="button" tabindex="0" aria-label="전체 주문서 보기"><div><div class="b1" id="b1"></div><span class="blink">눌러서 전체 주문서 보기</span></div><div class="b2" id="b2"></div></div>
 
 <dialog class="det" id="profDlg" aria-labelledby="pf-t">
   <div class="det-h"><div><h3 id="pf-t">내 몸 기준 설정</h3><p>입력하면 열량·단백질 기준이 내 몸에 맞게 바뀝니다. 이 기기에만 저장됩니다.</p></div><button class="det-x" type="button" id="pf-x" aria-label="닫기">×</button></div>
@@ -386,11 +401,13 @@ document.getElementById('basis').textContent =
 // ---------- state ----------
 const saved = (() => { try { return JSON.parse(localStorage.getItem('p20') || '{}'); } catch { return {}; } })();
 const S = { brand: saved.brand && BRANDS.some(b=>b.id===saved.brand) ? saved.brand : DATA[0].id, mode: saved.mode === 'dlv' ? 'dlv' : 'store',
-  cat: '전체', q: '', sort: 'value', carts: saved.carts || {}, open: null, example: !saved.carts, edit: null, delArm: null };
-if (S.example) S.carts = { lotteria: [ {k:'버거|리아 불고기', qty:1, dc:{}}, {k:'사이드(디저트)|지파이 고소한맛(S)', qty:1, dc:{store:3500}} ] };
-Object.values(S.carts).forEach(c => c.forEach(l => { if (typeof l.dc === 'number') l.dc = {store:l.dc}; else if (!l.dc || typeof l.dc !== 'object') l.dc = {}; }));
-S.pay = (saved.pay && typeof saved.pay === 'object') ? saved.pay : {};
-const save = () => { S.example = false; try { localStorage.setItem('p20', JSON.stringify({brand:S.brand, mode:S.mode, carts:S.carts, pay:S.pay})); } catch {} };
+  cat: '전체', q: '', sort: 'value', cart: [], open: null, example: !saved.cart && !saved.carts, edit: null, delArm: null, clrArm: false };
+// 전체 주문서: 여러 매장 메뉴를 한 주문서에 담음 (예전 매장별 주문서는 합쳐서 옮김)
+S.cart = Array.isArray(saved.cart) ? saved.cart : Object.entries(saved.carts || {}).flatMap(([b, c]) => (c || []).map(l => ({...l, b})));
+if (S.example) S.cart = [ {b:'lotteria', k:'버거|리아 불고기', qty:1, dc:{}}, {b:'lotteria', k:'사이드(디저트)|지파이 고소한맛(S)', qty:1, dc:{store:3500}} ];
+S.cart.forEach(l => { if (typeof l.dc === 'number') l.dc = {store:l.dc}; else if (!l.dc || typeof l.dc !== 'object') l.dc = {}; });
+S.pay = (Array.isArray(saved.cart) && saved.pay && typeof saved.pay === 'object') ? saved.pay : {};
+const save = () => { S.example = false; try { localStorage.setItem('p20', JSON.stringify({brand:S.brand, mode:S.mode, cart:S.cart, pay:S.pay})); } catch {} };
 
 // ---------- custom menus: private db subtree, browser fallback ----------
 const LSK = 'p20custom';
@@ -434,14 +451,17 @@ const B = () => BRANDS.find(b => b.id === S.brand);
 const customOf = bid => CUSTOM.filter(m => m.brand === bid).map(m => ({ c: bid === 'etc' ? (m.store || '기타') : (m.c || '직접 추가'), n: m.n, w: m.w ?? '', k: m.k ?? '', p: m.p, na: m.na ?? '', s: m.s ?? '', f: m.f ?? '', fl: '',
   ps: m.ps ?? null, pd: m.pd ?? null, cid: m.id, nd: m.pd == null ? '배달가 미입력' : '', ns: m.ps == null ? '매장가 미입력' : '' }));
 const itemsOf = b => [...b.items, ...customOf(b.id)];
-const mode = () => (S.mode === 'dlv' && B().dm !== 'none') ? 'dlv' : 'store';
-function priceOf(i){
-  if (mode() === 'store') return i.ps;
-  if (i.cid && i.pd == null && B().dm === 'same') return i.ps;
+const modeOf = b => (S.mode === 'dlv' && b.dm !== 'none') ? 'dlv' : 'store';
+const mode = () => modeOf(B());
+function priceOf(i, b = B()){
+  if (modeOf(b) === 'store') return i.ps;
+  if (i.cid && i.pd == null && b.dm === 'same') return i.ps;
   return i.pd;
 }
-const noteOf = i => mode() === 'dlv' ? (i.cid && i.pd == null && B().dm === 'same' ? '' : i.nd) : i.ns;
-const cart = () => (S.carts[S.brand] ||= []);
+const noteOf = (i, b = B()) => modeOf(b) === 'dlv' ? (i.cid && i.pd == null && b.dm === 'same' ? '' : i.nd) : i.ns;
+const BR = id => BRANDS.find(b => b.id === id);
+const cart = () => S.cart.filter(l => l.b === S.brand);
+const lineItem = l => { const b = BR(l.b); return b ? itemsOf(b).find(i => key(i) === l.k) : null; };
 const key = i => i.cid ? 'u|' + i.cid : i.c + '|' + i.n;
 const itemOf = k => itemsOf(B()).find(i => key(i) === k);
 
@@ -466,8 +486,8 @@ mS.onclick = () => { S.mode = 'store'; S.open = null; save(); renderAll(); };
 mD.onclick = () => { S.mode = 'dlv'; S.open = null; save(); renderAll(); };
 function renderMode(){
   const b = B(), m = mode();
-  mD.disabled = b.dm === 'none';
-  mS.setAttribute('aria-pressed', m === 'store'); mD.setAttribute('aria-pressed', m === 'dlv');
+  mD.disabled = false; // 전체 주문서라 주문 방식은 공통 — 배달가가 없는 매장은 매장가로 계산
+  mS.setAttribute('aria-pressed', S.mode === 'store'); mD.setAttribute('aria-pressed', S.mode === 'dlv');
   const label = {official:'배달가 따로 있음 · 공식 가격', rule:'배달가 따로 있음 · 추정 가격', same:'매장가와 배달가 동일', none:'배달가 미공개', custom:'직접 입력한 가격'}[b.dm];
   let txt = `<b>${b.name}: ${label}.</b> `;
   if (b.dm === 'none') txt += b.dnote + '. 배달로 시켰다면 메뉴를 담고 <b>할인</b> 버튼에 실제 결제가를 넣어 계산하세요.';
@@ -519,7 +539,7 @@ function renderMenu(){
       li.querySelector('[data-a="del"]').onclick = async () => {
         if (S.delArm !== i.cid) { S.delArm = i.cid; renderMenu(); return; }
         S.delArm = null;
-        try { await delCustom(i.cid); Object.values(S.carts).forEach((c, _) => {}); for (const bid in S.carts) S.carts[bid] = S.carts[bid].filter(l => l.k !== 'u|' + i.cid); save(); renderAll(); }
+        try { await delCustom(i.cid); S.cart = S.cart.filter(l => l.k !== 'u|' + i.cid); save(); renderAll(); }
         catch { ST.err = '삭제하지 못했습니다. 잠시 후 다시 시도하세요.'; setStat(); }
       };
     }
@@ -613,18 +633,19 @@ function healthHTML(h, title){
     <p class="hnote">${PROF ? '내 몸 기준(추정)' : '일반 성인 기준'} 참고용이며 의학적 판단이 아닙니다. 식이섬유·탄수화물·가공 정도는 반영하지 못했습니다. 기준: WHO·한국인 영양소 섭취기준의 권장 상한(나트륨 하루 2,000mg, 당류·포화지방 열량 10% 미만)을 '좋음'의 경계로 두고, 외식 현실을 반영해 '주의'는 그보다 여유 있게 잡았습니다.</p>`;
 }
 function showNutrition(){
-  const c = cart().filter(l => itemOf(l.k)); if (!c.length) return;
+  const c = S.cart.filter(l => lineItem(l)); if (!c.length) return;
   const d = document.getElementById('det'); const K = ['k','p','na','s','f'];
   const sum = {k:0,p:0,na:0,s:0,f:0}, miss = {k:0,p:0,na:0,s:0,f:0}; let n = 0;
   const has = v => v !== '' && v != null && isFinite(v);
-  c.forEach(l => { const i = itemOf(l.k); n += l.qty; K.forEach(x => { if (has(i[x])) sum[x] += i[x] * l.qty; else miss[x] += l.qty; }); });
+  c.forEach(l => { const i = lineItem(l); n += l.qty; K.forEach(x => { if (has(i[x])) sum[x] += i[x] * l.qty; else miss[x] += l.qty; }); });
   document.getElementById('det-t').textContent = '주문 전체 영양성분';
-  document.getElementById('det-s').textContent = `${B().name} · 메뉴 ${n}개 합계`;
+  document.getElementById('det-s').textContent = `${[...new Set(c.map(l => BR(l.b).name))].join(' + ')} · 메뉴 ${n}개 합계`;
   const row = (label, x, unit, hl) => { const pct = Math.round(sum[x] / DV[x] * 100);
     return `<tr class="${hl ? 'hl' : ''}"><td>${label}</td><td>${fmt(sum[x])}${unit}${miss[x] ? ' <span class="tag">일부 없음</span>' : ''}</td><td>${pct}%<span class="bar"><i class="${pct >= 50 && x !== 'p' ? 'hi' : ''}" style="width:${Math.min(pct,100)}%"></i></span></td></tr>`; };
   const cell = (i, x, q, unit) => has(i[x]) ? fmt(i[x] * q) + unit : '—';
-  const items = c.map(l => { const i = itemOf(l.k);
-    return `<tr><td>${esc(i.n)}${l.qty > 1 ? ` ×${l.qty}` : ''}</td><td>${cell(i,'k',l.qty,'')}</td><td>${cell(i,'p',l.qty,'g')}</td><td>${cell(i,'na',l.qty,'')}</td><td>${cell(i,'s',l.qty,'g')}</td><td>${cell(i,'f',l.qty,'g')}</td></tr>`; }).join('');
+  const multi = new Set(c.map(l => l.b)).size > 1;
+  const items = c.map(l => { const i = lineItem(l);
+    return `<tr><td>${multi ? '<span class="tag">' + esc(BR(l.b).name) + '</span> ' : ''}${esc(i.n)}${l.qty > 1 ? ` ×${l.qty}` : ''}</td><td>${cell(i,'k',l.qty,'')}</td><td>${cell(i,'p',l.qty,'g')}</td><td>${cell(i,'na',l.qty,'')}</td><td>${cell(i,'s',l.qty,'g')}</td><td>${cell(i,'f',l.qty,'g')}</td></tr>`; }).join('');
   const missN = Math.max(...K.map(x => miss[x]));
   document.getElementById('det-b').innerHTML = `
     <table><thead><tr><th>영양성분 (주문 전체)</th><th>합계</th><th>1일 기준치 대비</th></tr></thead><tbody>
@@ -678,29 +699,35 @@ function bindDetail(li, i){
 }
 
 function decItem(i){
-  const k = key(i); const c = cart(); const l = c.find(x => x.k === k); if (!l) return;
-  l.qty--; if (l.qty <= 0) { S.carts[S.brand] = c.filter(x => x !== l); if (S.open === k) S.open = null; }
+  const k = key(i); const l = S.cart.find(x => x.b === S.brand && x.k === k); if (!l) return;
+  l.qty--; if (l.qty <= 0) { S.cart = S.cart.filter(x => x !== l); if (S.open === S.brand + '|' + k) S.open = null; }
   save(); renderMenu(); renderSlip();
 }
 function addItem(i){
-  const c = cart(); const k = key(i); const l = c.find(x => x.k === k);
-  if (l) l.qty++; else c.push({k, qty: 1, dc: {}});
+  const k = key(i); const l = S.cart.find(x => x.b === S.brand && x.k === k);
+  if (l) l.qty++; else S.cart.push({b: S.brand, k, qty: 1, dc: {}});
   save(); renderMenu(); renderSlip();
 }
 
 function renderSlip(){
-  const b = B(), m = mode(); const c = cart().filter(l => itemOf(l.k)); S.carts[S.brand] = c;
-  document.getElementById('store').innerHTML = `${esc(b.name)}<span class="mode">${MODE[m]}</span>`;
+  const m = S.mode; S.cart = S.cart.filter(l => lineItem(l));
+  const bo = [...new Set(S.cart.map(l => l.b))]; S.cart.sort((x, y) => bo.indexOf(x.b) - bo.indexOf(y.b)); const c = S.cart;
+  document.getElementById('store').innerHTML = `${bo.length > 1 ? '매장 ' + bo.length + '곳' : bo.length ? esc(BR(bo[0]).name) : '비어 있음'}<span class="mode">${MODE[m]}</span>`;
+  const ct = document.getElementById('clearTop'); if (ct) { const n = c.reduce((a, l) => a + l.qty, 0); ct.disabled = !n; ct.textContent = S.clrArm && n ? '한 번 더 누르면 비워져요' : `주문서 비우기${n ? ' (' + n + ')' : ''}`; }
+  let lastB = null;
   const ul = document.getElementById('lines'); ul.innerHTML = '';
   let total = 0, orig = 0, prot = 0, skipped = 0;
-  if (!c.length) ul.innerHTML = '<li class="slip-empty">왼쪽 메뉴의 <b>+</b>를 눌러 먹을 메뉴를 담으세요. 여러 개를 담으면 합계로 계산합니다.</li>';
+  if (!c.length) ul.innerHTML = '<li class="slip-empty">메뉴의 <b>+</b>를 눌러 먹을 메뉴를 담으세요. 다른 매장으로 바꿔서 담아도 한 주문서에 모여 합계로 계산합니다.</li>';
   if (S.example && c.length) ul.innerHTML = '<li class="slip-empty" style="padding:8px 0 2px;font-size:12.5px">예시 주문입니다. 지파이는 매장 할인가 3,500원을 넣어 둔 상태예요. 비우기를 누르고 직접 담아 보세요.</li>';
   c.forEach(l => {
-    const i = itemOf(l.k); const list = priceOf(i); const dc = l.dc[m] ?? null;
+    const lb = BR(l.b); const m = modeOf(lb); const ok = l.b + '|' + l.k;
+    if (l.b !== lastB) { lastB = l.b; const h = document.createElement('li'); h.className = 'ln-b';
+      h.innerHTML = `<span class="dot" style="background:${lb.color}"></span>${esc(lb.name)}${S.mode === 'dlv' && m === 'store' ? ' <span class="tag">배달가 없어 매장가로 계산</span>' : ''}`; ul.appendChild(h); }
+    const i = lineItem(l); const list = priceOf(i, lb); const dc = l.dc[m] ?? null;
     const unit = dc ?? list; const has = unit != null;
     if (has) { total += unit * l.qty; orig += (list ?? unit) * l.qty; prot += i.p * l.qty; } else skipped++;
     const li = document.createElement('li'); li.className = 'ln';
-    const open = S.open === l.k;
+    const open = S.open === ok;
     const btn = dc !== null ? (list == null ? '입력가 ' : '할인 ') + won(dc) : (list == null ? '가격 입력' : '할인');
     li.innerHTML = `<div class="ln-top"><span class="n">${esc(i.n)}</span>
         <span class="amt">${dc !== null && list != null ? `<s>${won(list * l.qty)}</s>` : ''}${has ? won(unit * l.qty) : '—'}</span></div>
@@ -712,9 +739,9 @@ function renderSlip(){
         <input id="dc-in" type="number" inputmode="numeric" min="0" step="100" value="${dc ?? ''}" placeholder="${list ?? ''}">
         <span style="font-size:12.5px">원</span><button class="mini" type="submit">적용</button>
         ${dc !== null ? '<button class="mini ghost" type="button" data-a="reset">취소</button>' : ''}<p class="err" hidden></p></form>` : ''}`;
-    li.querySelector('[data-a="-"]').onclick = () => { l.qty--; if (l.qty <= 0) { S.carts[S.brand] = c.filter(x => x !== l); if (S.open === l.k) S.open = null; } save(); renderSlip(); renderMenu(); };
+    li.querySelector('[data-a="-"]').onclick = () => { l.qty--; if (l.qty <= 0) { S.cart = S.cart.filter(x => x !== l); if (S.open === ok) S.open = null; } save(); renderSlip(); renderMenu(); };
     li.querySelector('[data-a="+"]').onclick = () => { l.qty++; save(); renderSlip(); renderMenu(); };
-    li.querySelector('.dc').onclick = () => { S.open = open ? null : l.k; renderSlip(); if (!open) setTimeout(() => document.getElementById('dc-in')?.focus(), 0); };
+    li.querySelector('.dc').onclick = () => { S.open = open ? null : ok; renderSlip(); if (!open) setTimeout(() => document.getElementById('dc-in')?.focus(), 0); };
     const f = li.querySelector('form');
     if (f) {
       f.onsubmit = e => { e.preventDefault(); const v = f.querySelector('input').value.trim(); const err = f.querySelector('.err');
@@ -728,12 +755,12 @@ function renderSlip(){
     ul.appendChild(li);
   });
   // 최종 결제 금액 직접 입력 (묶음 할인 등) — 담은 메뉴·수량이 바뀌면 자동으로 풀림
-  const sig = c.map(l => l.k + 'x' + l.qty).join(',');
-  const pb = (S.pay[S.brand] ||= {}); let po = pb[m];
+  const sig = c.map(l => l.b + '|' + l.k + 'x' + l.qty).join(',');
+  const pb = S.pay; let po = pb[m];
   if (po && (po.sig !== sig || !c.length)) { delete pb[m]; po = null; save(); }
   const itemTotal = total; if (po) total = po.v;
   const v = per20(total, prot); const t = c.length && total + prot > 0 ? tier(v) : 'na';
-  const counted = c.filter(l => (l.dc[m] ?? priceOf(itemOf(l.k))) != null);
+  const counted = c.filter(l => { const lb = BR(l.b); return (l.dc[modeOf(lb)] ?? priceOf(lineItem(l), lb)) != null; });
   const tot = document.getElementById('tot');
   tot.innerHTML = c.length ? `
     <dt>메뉴 ${counted.reduce((a,l)=>a+l.qty,0)}개 ${MODE[m]} 정가</dt><dd>${won(orig)}</dd>
@@ -760,14 +787,14 @@ function renderSlip(){
     }
   }
   const vd = document.getElementById('verdict'); vd.className = 'verdict ' + t;
-  const est = m === 'dlv' && c.some(l => itemOf(l.k).nd === '추정' && l.dc.dlv == null);
+  const est = c.some(l => modeOf(BR(l.b)) === 'dlv' && lineItem(l).nd === '추정' && l.dc.dlv == null);
   if (!c.length) vd.innerHTML = `<span class="lbl">단백질 20g당 가격</span><span class="val">—</span><span class="word">—</span><span class="why">메뉴를 담으면 등급이 나옵니다.</span>`;
   else if (v === null) vd.innerHTML = `<span class="lbl">단백질 20g당 가격</span><span class="val">계산 불가</span><span class="word">—</span><span class="why">${prot < 1 && total > 0 ? '담은 메뉴의 단백질이 1g 미만입니다.' : '가격이 있는 메뉴가 없습니다.'}</span>`;
   else vd.innerHTML = `<span class="lbl">단백질 20g당 가격 · ${MODE[m]}${est ? ' (추정가 포함)' : ''}${po ? ' · 입력 금액' : ''}</span><span class="val">${Math.round(v).toLocaleString('ko-KR')}<small>원</small></span><span class="word">${WORD[t]}</span>
     <span class="why">${rankText(v)}</span>`;
   document.getElementById('nutBtn').hidden = !c.length;
   { const he = document.getElementById('health'); const n = {k:0,p:0,na:0,s:0,f:0}; const miss = {};
-    c.forEach(l => { const i = itemOf(l.k); ['k','p','na','s','f'].forEach(x => { if (hv(i[x])) n[x] += i[x] * l.qty; else miss[x] = 1; }); });
+    c.forEach(l => { const i = lineItem(l); ['k','p','na','s','f'].forEach(x => { if (hv(i[x])) n[x] += i[x] * l.qty; else miss[x] = 1; }); });
     Object.keys(miss).forEach(x => { if (x !== 'p') n[x] = null; });
     const h = c.length ? health(n, true) : null; he.hidden = !h;
     if (h) he.innerHTML = healthHTML(h, '건강 등급').replace(/<ul class="hchk">[\s\S]*?<\/ul>/, '').replace(/<p class="hnote">[\s\S]*?<\/p>/, '<p class="hnote">' + (PROF ? '내 몸 기준' : '일반 성인 기준') + ' 참고용 · 항목별 이유는 아래 버튼</p>'); }
@@ -846,7 +873,20 @@ function renderAll(){
 }
 document.getElementById('q').oninput = e => { S.q = e.target.value; renderMenu(); };
 document.getElementById('sort').onchange = e => { S.sort = e.target.value; renderMenu(); };
-document.getElementById('clear').onclick = () => { S.carts[S.brand] = []; S.open = null; save(); renderSlip(); renderMenu(); };
+const clearAll = () => { S.cart = []; S.pay = {}; S.open = null; S.payOpen = false; S.clrArm = false; save(); renderSlip(); renderMenu(); };
+document.getElementById('clear').onclick = clearAll;
+document.getElementById('clearTop').onclick = () => { if (!S.clrArm) { S.clrArm = true; renderSlip(); clearTimeout(S.clrT); S.clrT = setTimeout(() => { S.clrArm = false; renderSlip(); }, 3000); } else { clearTimeout(S.clrT); clearAll(); } };
+// 하단 바를 누르면 주문서를 전체 화면 팝업으로 띄움 (주문서 요소를 팝업으로 옮겼다가 닫으면 제자리로)
+{ const bar = document.getElementById('bar'), dlg = document.getElementById('slipDlg'), host = document.getElementById('slipHost'), slip = document.getElementById('slip');
+  const home = document.createComment('slip-home'); slip.parentNode.insertBefore(home, slip);
+  const open = () => { host.appendChild(slip); if (dlg.showModal) { if (!dlg.open) dlg.showModal(); } else dlg.setAttribute('open', ''); dlg.scrollTop = 0; };
+  const close = () => { if (dlg.close) dlg.close(); else { dlg.removeAttribute('open'); restore(); } };
+  const restore = () => { if (slip.parentNode === host) home.parentNode.insertBefore(slip, home.nextSibling); };
+  dlg.addEventListener('close', restore);
+  dlg.addEventListener('click', e => { if (e.target === dlg) close(); });
+  document.getElementById('slipX').onclick = close;
+  bar.addEventListener('click', open);
+  bar.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } }); }
 renderProf();
 renderAll();
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
