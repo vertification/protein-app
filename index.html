@@ -351,8 +351,8 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
           <label id="cf-store-w" hidden><span class="req">매장 이름</span><input id="cf-store" maxlength="30" placeholder="예: 노브랜드버거"></label>
           <label>분류<input id="cf-cat" maxlength="20" list="cf-cats" placeholder="직접 추가"><datalist id="cf-cats"></datalist></label>
           <label class="wide"><span class="req">메뉴 이름</span><input id="cf-name" maxlength="40" placeholder="예: 리아 불고기 더블 레드"></label>
-          <label><span class="req">매장가 (원)</span><input id="cf-ps" type="number" inputmode="numeric" min="0" step="100"></label>
-          <label>배달가 (원)<input id="cf-pd" type="number" inputmode="numeric" min="0" step="100" placeholder="모르면 비워 두기"></label>
+          <label><span class="req">매장가 (원)</span><input id="cf-ps" type="number" inputmode="numeric" min="0" step="10"></label>
+          <label>배달가 (원)<input id="cf-pd" type="number" inputmode="numeric" min="0" step="10" placeholder="모르면 비워 두기"></label>
           <label><span class="req">단백질 (g)</span><input id="cf-p" type="number" inputmode="decimal" min="0" step="0.1"></label>
           <label>열량 (kcal)<input id="cf-k" type="number" inputmode="numeric" min="0"></label>
           <label>나트륨 (mg)<input id="cf-na" type="number" inputmode="numeric" min="0"></label>
@@ -370,7 +370,7 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
       <p class="src" id="cstat"></p>
       <div class="crow" id="bk"><button class="btn sub" type="button" id="exp">내 메뉴 내보내기</button><button class="btn sub" type="button" id="impb">가져오기</button><input type="file" id="imp" accept=".json,application/json" hidden><span class="hint" id="bkmsg"></span></div>
       <p class="src" id="src"></p>
-      <p class="src">앱 버전 2026.10.30</p>
+      <p class="src">앱 버전 2026.10.30b</p>
     </section>
 
     <aside class="slip" id="slip" aria-labelledby="s3">
@@ -795,7 +795,7 @@ function renderSlip(){
         <span>단백질 ${fmt(i.p * l.qty)}g</span></div>
       ${!has ? `<p class="warn" style="margin:0">${MODE[m]} 가격이 없어 합계에서 뺐습니다. 실제 가격을 알면 <b>가격 입력</b>으로 넣으세요.</p>` : ''}
       ${open ? `<form class="dcbox"><label for="dc-in">${list == null ? '실제 1개 가격' : '할인된 1개 가격'} (${MODE[m]})</label>
-        <input id="dc-in" type="number" inputmode="numeric" min="0" step="100" value="${dc ?? ''}" placeholder="${list ?? ''}">
+        <input id="dc-in" type="number" inputmode="numeric" min="0" step="10" value="${dc ?? ''}" placeholder="${list ?? ''}">
         <span style="font-size:12.5px">원</span><button class="mini" type="submit">적용</button>
         ${dc !== null ? '<button class="mini ghost" type="button" data-a="reset">취소</button>' : ''}<p class="err" hidden></p></form>` : ''}`;
     li.querySelector('[data-a="-"]').onclick = () => { l.qty--; if (l.qty <= 0) { S.cart = S.cart.filter(x => x !== l); if (S.open === ok) S.open = null; } save(); renderSlip(); renderMenu(); };
