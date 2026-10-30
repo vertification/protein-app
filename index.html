@@ -250,6 +250,61 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
 .pres{background:var(--sunk);border-radius:8px;padding:10px 12px;font-size:13.5px;display:flex;flex-direction:column;gap:3px}
 .pres b{font-family:var(--mono)}
 .det-n{font-size:12px;color:var(--muted);margin:0;line-height:1.6}
+
+/* ---------- 테마: 스포츠 (검정 + 라임) ---------- */
+:root[data-skin="sport"]{
+  --bg:#0a0c0b; --surface:#141816; --sunk:#1e2420; --ink:#f3f6f4; --muted:#98a29c; --line:#2a312d;
+  --accent:#c6ff3d; --accent-ink:#0a0c0b; --paper:#111513;
+  --good:#c6ff3d; --good-bg:#26330c; --soso:#ffb020; --soso-bg:#3a2a08; --bad:#ff5a5f; --bad-bg:#3d1517; color-scheme:dark}
+[data-skin="sport"] body{background:var(--bg)}
+[data-skin="sport"] h1{letter-spacing:.02em}
+[data-skin="sport"] h1 em{color:var(--accent)}
+[data-skin="sport"] .brand[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+[data-skin="sport"] .seg{border-color:var(--accent)} [data-skin="sport"] .seg button+button{border-left-color:var(--accent)}
+[data-skin="sport"] .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+[data-skin="sport"] .slip{border-radius:14px;border-color:var(--line)}
+[data-skin="sport"] .slip-h,[data-skin="sport"] .tot,[data-skin="sport"] .det-h{border-style:solid;border-width:0 0 1px}
+[data-skin="sport"] .tot{border-width:1px 0 0}
+[data-skin="sport"] .verdict .val{font-size:30px}
+[data-skin="sport"] .verdict .word{font-size:46px}
+[data-skin="sport"] .mi .v b{font-size:15px;color:var(--accent)}
+[data-skin="sport"] .bar{background:var(--accent);color:var(--accent-ink)}
+[data-skin="sport"] .bar .b2.good,[data-skin="sport"] .bar .b2.soso,[data-skin="sport"] .bar .b2.bad{color:var(--accent-ink)}
+[data-skin="sport"] .ghostbtn{border-style:solid}
+/* ---------- 테마: 클린 (흰색 + 파랑) ---------- */
+:root[data-skin="clean"]{
+  --bg:#f2f4f6; --surface:#ffffff; --sunk:#f0f2f5; --ink:#191f28; --muted:#6b7684; --line:#e5e8eb;
+  --accent:#3182f6; --accent-ink:#ffffff; --paper:#ffffff;
+  --good:#0f8a52; --good-bg:#e2f6ec; --soso:#c27500; --soso-bg:#fff2d9; --bad:#e5383b; --bad-bg:#fde7e8;
+  --display:'IBM Plex Sans KR',system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif; color-scheme:light}
+[data-skin="clean"] body{background:var(--bg)}
+[data-skin="clean"] h1,[data-skin="clean"] .slip-h h2,[data-skin="clean"] .det-h h3,[data-skin="clean"] .sheet-h b,[data-skin="clean"] .cform h3{font-weight:700}
+[data-skin="clean"] .verdict .word,[data-skin="clean"] .bar .b2{font-weight:800}
+[data-skin="clean"] .menu,[data-skin="clean"] .slip,[data-skin="clean"] .prof,[data-skin="clean"] .cform,[data-skin="clean"] .health{border:0;border-radius:18px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 6px 20px -12px rgba(0,0,0,.12)}
+[data-skin="clean"] .mi{border-top-color:#f2f4f6;padding:14px 16px}
+[data-skin="clean"] .slip-h,[data-skin="clean"] .tot,[data-skin="clean"] .det-h{border-style:solid;border-width:0 0 1px;border-color:var(--line)}
+[data-skin="clean"] .tot{border-width:1px 0 0}
+[data-skin="clean"] .ln{border-bottom-style:solid;border-bottom-color:#f2f4f6}
+[data-skin="clean"] .verdict{border-radius:16px}
+[data-skin="clean"] .brand{border:0;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+[data-skin="clean"] .brand[aria-pressed="true"]{background:var(--accent);color:#fff}
+[data-skin="clean"] .seg{border:0;background:var(--sunk);padding:3px;border-radius:12px;gap:3px}
+[data-skin="clean"] .seg button{border-radius:9px;background:transparent}
+[data-skin="clean"] .seg button+button{border-left:0}
+[data-skin="clean"] .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+[data-skin="clean"] .add{border-radius:12px}
+[data-skin="clean"] .add:not([data-on]){background:#e8f3ff;border-color:#e8f3ff}
+[data-skin="clean"] .ghostbtn{border-style:solid;border-radius:10px}
+[data-skin="clean"] .tab{border-radius:999px;padding:7px 13px}
+[data-skin="clean"] .search,[data-skin="clean"] .sort{border-color:transparent;background:var(--surface);border-radius:12px}
+[data-skin="clean"] dialog.det,[data-skin="clean"] dialog.sheet{border:0}
+[data-skin="clean"] .bar{background:var(--surface);color:var(--ink);box-shadow:0 -4px 20px -8px rgba(0,0,0,.18)}
+[data-skin="clean"] .bar .b2.good{color:var(--good)} [data-skin="clean"] .bar .b2.soso{color:var(--soso)} [data-skin="clean"] .bar .b2.bad{color:var(--bad)}
+/* 테마 선택 */
+.skins{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.skins button{appearance:none;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 10px;font:600 12.5px var(--body);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.skins button i{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid rgba(128,128,128,.4)}
+.skins button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
 </style>
 </head>
 <body>
@@ -259,6 +314,7 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
   <header class="top">
     <div>
       <h1>단백질 <em>20g</em>당 얼마?</h1>
+      <div class="skins" role="group" aria-label="테마">테마<button type="button" data-skin="base"><i style="background:linear-gradient(135deg,#eef1ee 50%,#0f5c4c 50%)"></i>기본</button><button type="button" data-skin="sport"><i style="background:linear-gradient(135deg,#0a0c0b 50%,#c6ff3d 50%)"></i>스포츠</button><button type="button" data-skin="clean"><i style="background:linear-gradient(135deg,#ffffff 50%,#3182f6 50%)"></i>클린</button></div>
       <p class="lede">매장과 주문 방식(매장·배달)을 고르고 먹을 메뉴를 담으면, 단백질 20g을 얻는 데 드는 돈과 가성비 등급을 보여줍니다.</p>
     </div>
     <div><div class="thresh" id="thresh"></div><p class="basis" id="basis"></p></div>
@@ -314,7 +370,7 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
       <p class="src" id="cstat"></p>
       <div class="crow" id="bk"><button class="btn sub" type="button" id="exp">내 메뉴 내보내기</button><button class="btn sub" type="button" id="impb">가져오기</button><input type="file" id="imp" accept=".json,application/json" hidden><span class="hint" id="bkmsg"></span></div>
       <p class="src" id="src"></p>
-      <p class="src">앱 버전 2026.10.29b</p>
+      <p class="src">앱 버전 2026.10.30</p>
     </section>
 
     <aside class="slip" id="slip" aria-labelledby="s3">
@@ -356,7 +412,7 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
     <div class="pres" id="pf-res"></div>
     <p class="cerr" id="pf-err" hidden></p>
     <div class="crow"><button class="btn" type="submit">저장</button><button class="btn sub" type="button" id="pf-clear">일반 성인 기준으로 되돌리기</button></div>
-    <p class="det-n">하루 열량은 Mifflin-St Jeor 공식으로 구한 기초대사량에 활동량을 곱해 추정합니다. 단백질 목표는 체중 1kg당 유지 1.0g · 감량 1.6g · 근육 증가 1.8g입니다. 근육량이나 질환은 반영하지 못하는 추정값이며, 나트륨 기준(하루 2,000mg)은 체형과 관계없이 같습니다.</p>
+    <p class="det-n">하루 열량은 Mifflin-St Jeor 공식으로 구한 기초대사량에 활동량을 곱해 추정합니다. 단백질 목표는 활동량과 목표에 따라 체중 1kg당 0.9~2.0g입니다(예: 보통 활동량이면 유지 1.2g · 근육 증가 1.6g · 감량 1.6g). 한국인 영양소 섭취기준(성인 약 0.9g)과 운동하는 사람 대상 연구(1.4~2.0g, 1.6g 이상은 추가 효과가 작음)를 바탕으로 했습니다. 근육량이나 질환은 반영하지 못하는 추정값이며, 나트륨 기준(하루 2,000mg)은 체형과 관계없이 같습니다.</p>
   </form>
 </dialog>
 <dialog class="det" id="det" aria-labelledby="det-t">
@@ -552,13 +608,16 @@ function renderMenu(){
 const DV = {k:2000, p:55, na:2000, s:100, f:15}; // 한국 1일 영양성분 기준치 (내 몸 기준 설정 시 열량·단백질·당류·포화지방이 바뀜)
 const DV0 = {...DV};
 // ---------- 내 몸 기준 ----------
-const GOAL = {keep:{n:'체중 유지', m:1, pk:1.0}, cut:{n:'감량', m:0.85, pk:1.6}, bulk:{n:'근육 증가', m:1.1, pk:1.8}};
+const GOAL = {keep:{n:'체중 유지', m:1}, cut:{n:'감량', m:0.85}, bulk:{n:'근육 증가', m:1.1}};
+// 체중 1kg당 하루 단백질(g) — 활동량 × 목표. 유지는 활동량이 클수록 늘고, 근육 증가는 1.6g(효과가 거의 최대인 지점) 안팎, 감량은 근손실 방지로 조금 더 높게
+const PKG = {'1.2':{keep:0.9, bulk:1.4, cut:1.2}, '1.375':{keep:1.0, bulk:1.6, cut:1.4}, '1.55':{keep:1.2, bulk:1.6, cut:1.6}, '1.725':{keep:1.4, bulk:1.8, cut:1.8}, '1.9':{keep:1.6, bulk:1.8, cut:2.0}};
+const pkgOf = p => (PKG[String(p.act)] || PKG['1.55'])[p.goal] || 1.2;
 let PROF = null; try { PROF = JSON.parse(localStorage.getItem('p20prof') || 'null'); } catch {}
 function calcProf(p){
   const bmr = 10 * p.w + 6.25 * p.h - 5 * p.age + (p.sex === 'f' ? -161 : 5);
   const g = GOAL[p.goal] || GOAL.keep;
   const kcal = Math.round(bmr * p.act * g.m / 10) * 10;
-  return {bmr: Math.round(bmr), kcal, prot: Math.round(p.w * g.pk)};
+  return {bmr: Math.round(bmr), kcal, prot: Math.round(p.w * pkgOf(p)), pkg: pkgOf(p)};
 }
 function applyProf(){
   if (PROF) { const r = calcProf(PROF); DV.k = r.kcal; DV.p = r.prot; DV.s = Math.round(DV0.s * r.kcal / 2000); DV.f = Math.round(DV0.f * r.kcal / 2000); }
@@ -583,7 +642,7 @@ function profPreview(){
   const p = readProf(); const box = pf('pf-res');
   if (!p) { box.innerHTML = '나이·키·몸무게를 넣으면 기준이 계산됩니다.'; return; }
   const r = calcProf(p);
-  box.innerHTML = `<span>기초대사량 <b>${r.bmr.toLocaleString('ko-KR')}kcal</b></span><span>하루 목표 열량 <b>${r.kcal.toLocaleString('ko-KR')}kcal</b> · 한 끼 약 <b>${Math.round(r.kcal / 3).toLocaleString('ko-KR')}kcal</b></span><span>하루 단백질 목표 <b>${r.prot}g</b> · 한 끼 약 <b>${Math.round(r.prot / 3)}g</b></span>`;
+  box.innerHTML = `<span>기초대사량 <b>${r.bmr.toLocaleString('ko-KR')}kcal</b></span><span>하루 목표 열량 <b>${r.kcal.toLocaleString('ko-KR')}kcal</b> · 한 끼 약 <b>${Math.round(r.kcal / 3).toLocaleString('ko-KR')}kcal</b></span><span>하루 단백질 목표 <b>${r.prot}g</b> (체중 1kg당 ${r.pkg}g) · 한 끼 약 <b>${Math.round(r.prot / 3)}g</b></span>`;
 }
 function openProf(){
   const d = pf('profDlg'); pf('pf-err').hidden = true;
@@ -887,6 +946,19 @@ document.getElementById('clearTop').onclick = () => { if (!S.clrArm) { S.clrArm 
   document.getElementById('slipX').onclick = close;
   bar.addEventListener('click', open);
   bar.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } }); }
+// ---------- 테마 선택 ----------
+const SKIN_BAR = {base: null, sport: '#0a0c0b', clean: '#f2f4f6'};
+function applySkin(k){
+  if (!SKIN_BAR.hasOwnProperty(k)) k = 'base';
+  const r = document.documentElement;
+  if (k === 'base') r.removeAttribute('data-skin'); else r.setAttribute('data-skin', k);
+  document.querySelectorAll('.skins button').forEach(b => b.setAttribute('aria-pressed', b.dataset.skin === k));
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => { if (!m.dataset.orig) m.dataset.orig = m.content; m.content = SKIN_BAR[k] || m.dataset.orig; });
+  try { localStorage.setItem('p20skin', k); } catch {}
+}
+document.querySelectorAll('.skins button').forEach(b => b.onclick = () => applySkin(b.dataset.skin));
+applySkin((() => { try { return localStorage.getItem('p20skin') || 'base'; } catch { return 'base'; } })());
+
 renderProf();
 renderAll();
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
