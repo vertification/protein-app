@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-02T06:44+09:00",
+ "updated": "2026-11-09T06:45+09:00",
  "stores": {
   "cu": {
    "ok": true,
@@ -14,7 +14,7 @@
   },
   "emart24": {
    "ok": true,
-   "total": 2399,
+   "total": 2401,
    "matched": 14
   },
   "gs25": {
