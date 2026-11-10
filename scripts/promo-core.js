@@ -7,6 +7,12 @@
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const kstToday = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
   const monthEnd = () => { const d = new Date(Date.now() + 9 * 3600e3); return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).toISOString().slice(0, 10); };
+  // "12.22" 같은 월.일 → YYYY-MM-DD. 연도가 없으니 오늘과 가장 가까운 해로 붙임 (12.22~01.05 같은 연말·연초 행사)
+  const mdDate = (s, today) => {
+    const m = s && s.match(/(\d{1,2})\.(\d{1,2})/); if (!m) return null;
+    const md = `-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`, y = +today.slice(0, 4), t = Date.parse(today);
+    return [y - 1, y, y + 1].map(v => v + md).sort((a, b) => Math.abs(Date.parse(a) - t) - Math.abs(Date.parse(b) - t))[0];
+  };
   const normType = t => { t = t.replace(/\s+/g, ''); return /^[123]\+1$/.test(t) ? t : /세일|할인|SALE/i.test(t) ? 'sale' : t; };
 
   // ---- CU: 매월 1+1·2+1 (기간 = 이번 달) ----
@@ -70,8 +76,8 @@
   }
   // ---- 이마트24: 상품마다 행사 기간이 따로 있음 ----
   async function emart24(base = 'https://emart24.co.kr') {
-    const out = []; const seen = new Set(); const y = kstToday().slice(0, 4);
-    const day = s => { const m = s && s.match(/(\d{1,2})\.(\d{1,2})/); return m ? `${y}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}` : null; };
+    // 2026.11 확인: 목록 페이지에 상품별 기간이 아예 없음 → 대부분 to = 이번 달 말일. 기간이 다시 표시되면 아래 dm으로 읽음
+    const out = []; const seen = new Set(); const T = kstToday(); const day = s => mdDate(s, T);
     for (let p = 1; p <= 200; p++) {
       const r = await fetch(`${base}/goods/event?search=&category_seq=&base_category_seq=&align=&page=${p}`, { headers: UA });
       if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -134,11 +140,11 @@
       for (const i of b.items) {
         if (i.ps == null) continue; let top = null, ts = 0;
         for (const p of list) { const sc = score(i.n, p.pn, i.pb); if (sc > ts) { ts = sc; top = p; } }
-        if (top && ts >= min) res.push({ b: b.id, n: i.n, t: top.t, pn: top.pn, pr: top.pr, from: top.from || null, to: top.to, sc: Math.round(ts * 100) / 100 });
+        if (top && ts >= min) res.push({ b: b.id, ...(i.id ? { id: i.id } : {}), n: i.n, t: top.t, pn: top.pn, pr: top.pr, from: top.from || null, to: top.to, sc: Math.round(ts * 100) / 100 });
       }
     }
     return res;
   }
-  const api = { cu, seven, pyony, emart24, match, score, norm, kstToday, monthEnd };
+  const api = { cu, seven, pyony, emart24, match, score, norm, kstToday, monthEnd, mdDate };
   if (typeof module !== 'undefined') module.exports = api; else root.PROMO = api;
 })(typeof window !== 'undefined' ? window : globalThis);
