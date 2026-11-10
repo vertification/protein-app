@@ -17,7 +17,14 @@
 <title>단백질 가성비 계산기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<script>
+// 테마(기본=지하철 / 클래식)·화면 밝기를 그리기 전에 적용해 깜빡임 방지
+(function(){ var r = document.documentElement, s = null, d = null;
+  try { s = localStorage.getItem('p20skin'); d = localStorage.getItem('p20dark'); } catch (e) {}
+  r.setAttribute('data-skin', s === 'classic' ? 'classic' : 'subway');
+  if (d === 'light' || d === 'dark') r.setAttribute('data-theme', d); })();
+</script>
 <style>
 /* Layout: brand rail on top, menu board (left) + receipt-style order slip (right, sticky); stacks on phones with a bottom summary bar */
 :root{
@@ -44,8 +51,6 @@ header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:spac
 h1{font-family:var(--display);font-weight:400;font-size:clamp(26px,4vw,36px);line-height:1.1;margin:0;letter-spacing:.01em;text-wrap:balance}
 h1 em{font-style:normal;color:var(--accent)}
 .lede{margin:4px 0 0;color:var(--muted);font-size:14px}
-.thresh{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 12px}
-.thresh b{font-family:var(--mono);font-weight:600;color:var(--ink)}
 .step{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 8px}
 /* brand rail */
 .brands{display:flex;flex-wrap:wrap;gap:8px}
@@ -273,60 +278,253 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
 .pres b{font-family:var(--mono)}
 .det-n{font-size:12px;color:var(--muted);margin:0;line-height:1.6}
 
-/* ---------- 테마: 스포츠 (검정 + 라임) ---------- */
-:root[data-skin="sport"]{
-  --bg:#0a0c0b; --surface:#141816; --sunk:#1e2420; --ink:#f3f6f4; --muted:#98a29c; --line:#2a312d;
-  --accent:#c6ff3d; --accent-ink:#0a0c0b; --paper:#111513;
-  --good:#c6ff3d; --good-bg:#26330c; --soso:#ffb020; --soso-bg:#3a2a08; --bad:#ff5a5f; --bad-bg:#3d1517; color-scheme:dark}
-[data-skin="sport"] body{background:var(--bg)}
-[data-skin="sport"] h1{letter-spacing:.02em}
-[data-skin="sport"] h1 em{color:var(--accent)}
-[data-skin="sport"] .brand[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-[data-skin="sport"] .seg{border-color:var(--accent)} [data-skin="sport"] .seg button+button{border-left-color:var(--accent)}
-[data-skin="sport"] .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
-[data-skin="sport"] .slip{border-radius:14px;border-color:var(--line)}
-[data-skin="sport"] .slip-h,[data-skin="sport"] .tot,[data-skin="sport"] .det-h{border-style:solid;border-width:0 0 1px}
-[data-skin="sport"] .tot{border-width:1px 0 0}
-[data-skin="sport"] .verdict .val{font-size:30px}
-[data-skin="sport"] .verdict .word{font-size:46px}
-[data-skin="sport"] .mi .v b{font-size:15px;color:var(--accent)}
-[data-skin="sport"] .bar{background:var(--accent);color:var(--accent-ink)}
-[data-skin="sport"] .bar .b2.good,[data-skin="sport"] .bar .b2.soso,[data-skin="sport"] .bar .b2.bad{color:var(--accent-ink)}
-[data-skin="sport"] .ghostbtn{border-style:solid}
-/* ---------- 테마: 클린 (흰색 + 파랑) ---------- */
-:root[data-skin="clean"]{
-  --bg:#f2f4f6; --surface:#ffffff; --sunk:#f0f2f5; --ink:#191f28; --muted:#6b7684; --line:#e5e8eb;
-  --accent:#3182f6; --accent-ink:#ffffff; --paper:#ffffff;
-  --good:#0f8a52; --good-bg:#e2f6ec; --soso:#c27500; --soso-bg:#fff2d9; --bad:#e5383b; --bad-bg:#fde7e8;
-  --display:'IBM Plex Sans KR',system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif; color-scheme:light}
-[data-skin="clean"] body{background:var(--bg)}
-[data-skin="clean"] h1,[data-skin="clean"] .slip-h h2,[data-skin="clean"] .det-h h3,[data-skin="clean"] .sheet-h b,[data-skin="clean"] .cform h3{font-weight:700}
-[data-skin="clean"] .verdict .word,[data-skin="clean"] .bar .b2{font-weight:800}
-[data-skin="clean"] .menu,[data-skin="clean"] .slip,[data-skin="clean"] .prof,[data-skin="clean"] .cform,[data-skin="clean"] .health{border:0;border-radius:18px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 6px 20px -12px rgba(0,0,0,.12)}
-[data-skin="clean"] .mi{border-top-color:#f2f4f6;padding:14px 16px}
-[data-skin="clean"] .slip-h,[data-skin="clean"] .tot,[data-skin="clean"] .det-h{border-style:solid;border-width:0 0 1px;border-color:var(--line)}
-[data-skin="clean"] .tot{border-width:1px 0 0}
-[data-skin="clean"] .ln{border-bottom-style:solid;border-bottom-color:#f2f4f6}
-[data-skin="clean"] .verdict{border-radius:16px}
-[data-skin="clean"] .brand{border:0;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.06)}
-[data-skin="clean"] .brand[aria-pressed="true"]{background:var(--accent);color:#fff}
-[data-skin="clean"] .seg{border:0;background:var(--sunk);padding:3px;border-radius:12px;gap:3px}
-[data-skin="clean"] .seg button{border-radius:9px;background:transparent}
-[data-skin="clean"] .seg button+button{border-left:0}
-[data-skin="clean"] .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
-[data-skin="clean"] .add{border-radius:12px}
-[data-skin="clean"] .add:not([data-on]){background:#e8f3ff;border-color:#e8f3ff}
-[data-skin="clean"] .ghostbtn{border-style:solid;border-radius:10px}
-[data-skin="clean"] .tab{border-radius:999px;padding:7px 13px}
-[data-skin="clean"] .search,[data-skin="clean"] .sort{border-color:transparent;background:var(--surface);border-radius:12px}
-[data-skin="clean"] dialog.det,[data-skin="clean"] dialog.sheet{border:0}
-[data-skin="clean"] .bar{background:var(--surface);color:var(--ink);box-shadow:0 -4px 20px -8px rgba(0,0,0,.18)}
-[data-skin="clean"] .bar .b2.good{color:var(--good)} [data-skin="clean"] .bar .b2.soso{color:var(--soso)} [data-skin="clean"] .bar .b2.bad{color:var(--bad)}
-/* 테마 선택 */
-.skins{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
-.skins button{appearance:none;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 10px;font:600 12.5px var(--body);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
-.skins button i{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid rgba(128,128,128,.4)}
-.skins button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+/* ---------- 공통: 새 배치 (두 테마 모두) ---------- */
+:root{--r-good:var(--good);--r-soso:var(--soso);--r-bad:var(--bad);--t30:50%;--t60:66%}
+header.top{display:block}
+.sign{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px}
+.about summary{cursor:pointer;color:var(--muted);font-size:13.5px;font-weight:600;padding:10px 0;width:max-content;max-width:100%}
+.about[open] summary{color:var(--ink)}
+.about .lede,.about .basis{max-width:70ch}
+.step{display:flex;align-items:center}
+.step span,.stepno{display:inline-grid;place-items:center;flex:none;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--bg);font:700 12px/1 var(--body);margin-right:8px;letter-spacing:0;text-transform:none}
+.slip-h h2{display:flex;align-items:center}
+.modebar{margin-top:8px}
+.modebar .mnote{flex:1 1 260px}
+/* 가성비 노선: 0원 → GOOD → SOSO → BAD, 모든 줄이 같은 축척 */
+.thresh{display:flex;flex-direction:column;gap:6px;margin:2px 0 4px}
+.thresh .rt{position:relative;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--r-good) 0 var(--t30),var(--r-soso) var(--t30) var(--t60),var(--r-bad) var(--t60))}
+.thresh .rt i{position:absolute;top:50%;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--ink);transform:translate(-50%,-50%)}
+.thresh .rk{display:flex;flex-wrap:wrap;gap:2px 14px;font-size:12.5px;color:var(--muted)}
+.thresh .rk span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.thresh .rk i{width:8px;height:8px;border-radius:50%;flex:none}
+.thresh .rk b{color:var(--ink);font-weight:700}
+.route{grid-column:1/-1;position:relative;height:12px;margin-top:2px}
+.route::before{content:"";position:absolute;left:0;right:0;top:5px;height:2px;border-radius:1px;background:linear-gradient(90deg,var(--r-good) 0 var(--t30),var(--r-soso) var(--t30) var(--t60),var(--r-bad) var(--t60));opacity:.75}
+.route i{position:absolute;top:0;width:12px;height:12px;border-radius:50%;background:var(--surface);border:3px solid var(--ink);transform:translateX(-50%)}
+.route i.over{border-radius:2px}
+.verdict .route{grid-column:1/-1;height:16px;margin-top:8px}
+.verdict .route::before{top:6px;height:4px;opacity:1}
+.verdict .route i{width:16px;height:16px;border-width:4px}
+.prefs{display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:6px;padding-top:12px;border-top:1px solid var(--line)}
+.skins{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.skins button{appearance:none;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;min-height:40px;padding:0 13px;font:600 13px var(--body);cursor:pointer}
+.skins button[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+
+/* ---------- 테마: 기본 (서울 지하철 안내 사인) ---------- */
+:root[data-skin="subway"]{
+  --bg:#eef1f4; --surface:#ffffff; --sunk:#e7ebf0; --ink:#16233a; --muted:#55617a; --line:#d3dae3;
+  --accent:#16233a; --accent-ink:#ffffff; --paper:#ffffff;
+  --good:#0e7040; --good-bg:#dcf2e4; --soso:#8f5c00; --soso-bg:#fbeecd; --bad:#c22a2a; --bad-bg:#fbe3e3;
+  --r-good:#1f9d55; --r-soso:#e3a008; --r-bad:#d93a3a;
+  --sign:#16233a; --sign-2:#273a58; --sign-ink:#ffffff; --sign-mute:#c3cddd; --hi:#ffd23f;
+  --display:'Noto Sans KR',system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  --body:var(--display); --mono:var(--display); color-scheme:light}
+@media (prefers-color-scheme: dark){:root[data-skin="subway"]:not([data-theme="light"]){
+  --bg:#0d141f; --surface:#151f2e; --sunk:#1c2839; --ink:#e6ecf4; --muted:#9dabc0; --line:#2a3749;
+  --accent:#e6ecf4; --accent-ink:#0d141f; --paper:#151f2e;
+  --good:#5ad391; --good-bg:#123425; --soso:#f2b84b; --soso-bg:#382a0e; --bad:#ff8f8f; --bad-bg:#3a1a1c;
+  --r-good:#3cbf74; --r-soso:#e8ac2a; --r-bad:#f05a5a; --sign:#1a2840; --sign-2:#2b3f60; color-scheme:dark}}
+:root[data-skin="subway"][data-theme="dark"]{
+  --bg:#0d141f; --surface:#151f2e; --sunk:#1c2839; --ink:#e6ecf4; --muted:#9dabc0; --line:#2a3749;
+  --accent:#e6ecf4; --accent-ink:#0d141f; --paper:#151f2e;
+  --good:#5ad391; --good-bg:#123425; --soso:#f2b84b; --soso-bg:#382a0e; --bad:#ff8f8f; --bad-bg:#3a1a1c;
+  --r-good:#3cbf74; --r-soso:#e8ac2a; --r-bad:#f05a5a; --sign:#1a2840; --sign-2:#2b3f60; color-scheme:dark}
+[data-skin="subway"] body{background:var(--bg);font-variant-numeric:tabular-nums;padding-top:0;caret-color:var(--ink)}
+[data-skin="subway"] ::selection{background:var(--hi);color:#16233a}
+[data-skin="subway"] .wrap{gap:14px}
+/* 안내판 띠 */
+[data-skin="subway"] .sign{background:var(--sign);color:var(--sign-ink);box-shadow:0 0 0 100vmax var(--sign);clip-path:inset(0 -100vmax);padding:calc(12px + env(safe-area-inset-top,0px)) 0 12px}
+[data-skin="subway"] h1{font:900 22px/1.2 var(--body);letter-spacing:-.01em;color:var(--sign-ink)}
+[data-skin="subway"] h1 em{color:var(--hi)}
+[data-skin="subway"] .sign .seg{border:0;background:var(--sign-2);border-radius:12px;padding:3px;gap:2px}
+[data-skin="subway"] .sign .seg button{background:transparent;color:var(--sign-mute);border:0;border-radius:9px;min-height:40px;padding:0 18px;font:700 14px var(--body)}
+[data-skin="subway"] .sign .seg button[aria-pressed="true"]{background:#ffffff;color:#16233a}
+[data-skin="subway"] .sign :focus-visible{outline-color:var(--hi)}
+[data-skin="subway"] .about{margin-top:2px}
+[data-skin="subway"] .about .lede,[data-skin="subway"] .about .basis{font-size:13.5px;color:var(--muted);margin:0 0 8px}
+[data-skin="subway"] .prof{border-radius:12px;padding:8px 8px 8px 14px;font-size:13.5px;gap:6px 12px}
+[data-skin="subway"] .prof b{font-family:var(--body);font-weight:700}
+[data-skin="subway"] .step{font:700 14px var(--body);letter-spacing:0;text-transform:none;color:var(--ink);margin:0 0 8px}
+[data-skin="subway"] .step span,[data-skin="subway"] .stepno{background:var(--sign);color:#ffffff}
+/* 매장 = 노선 배지 */
+[data-skin="subway"] .brands{gap:8px}
+[data-skin="subway"] .brand{border:2px solid var(--c);background:var(--surface);color:var(--ink);min-height:44px;padding:0 14px 0 8px;font:700 14px var(--body);gap:8px}
+[data-skin="subway"] .brand .dot{width:18px;height:18px;box-shadow:0 0 0 2px var(--surface) inset}
+[data-skin="subway"] .brand .cnt{font:500 12px var(--body);color:var(--muted)}
+[data-skin="subway"] .brand:hover{background:color-mix(in srgb,var(--c) 8%,var(--surface))}
+[data-skin="subway"] .brand[aria-pressed="true"]{background:color-mix(in srgb,var(--c) 18%,var(--surface));color:var(--ink);border-color:var(--c);font-weight:900}
+[data-skin="subway"] .brand[aria-pressed="true"] .cnt{color:var(--ink);opacity:1}
+[data-skin="subway"] .brand-sep{font:700 12.5px var(--body);color:var(--muted);margin:6px 0 0}
+@media (max-width:900px){
+  [data-skin="subway"] .brands{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-inline:-16px;padding:2px 16px 6px;scroll-padding-inline:16px;
+    -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 32px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 32px),transparent)}
+  [data-skin="subway"] .brands::-webkit-scrollbar{display:none}
+  [data-skin="subway"] .brand{flex:none}
+  [data-skin="subway"] .brand-sep{flex:none;align-self:center;margin:0 0 0 4px;padding:0 2px 0 12px;border-left:1px solid var(--line)}
+}
+[data-skin="subway"] .modebar{gap:8px 12px;align-items:center}
+[data-skin="subway"] .mnote{font-size:13px}
+[data-skin="subway"] .ghostbtn{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;min-height:44px;padding:0 14px;font:700 14px var(--body)}
+[data-skin="subway"] .ghostbtn:hover{border-color:var(--ink)}
+[data-skin="subway"] .ghostbtn.clr{border-color:color-mix(in srgb,var(--bad) 45%,var(--line));color:var(--bad);min-height:40px}
+[data-skin="subway"] .prof .ghostbtn{min-height:40px;padding:0 12px;font-size:13px}
+/* 메뉴판 */
+[data-skin="subway"] .tools{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+[data-skin="subway"] .search,[data-skin="subway"] .sort{min-height:44px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);font:15px var(--body);padding:0 12px}
+[data-skin="subway"] .search:focus,[data-skin="subway"] .sort:focus{border-color:var(--ink)}
+[data-skin="subway"] .pbar{font-size:13px;gap:6px 10px}
+[data-skin="subway"] .pbar button{border:1.5px solid var(--ink);color:var(--ink);min-height:40px;padding:0 14px;font:700 13px var(--body)}
+[data-skin="subway"] .pbar button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+[data-skin="subway"] .tab{background:var(--surface);border:1.5px solid var(--line);border-radius:999px;min-height:40px;padding:0 14px;font:600 14px var(--body)}
+[data-skin="subway"] .tab[aria-selected="true"]{background:var(--sign);border-color:var(--sign);color:#ffffff}
+[data-skin="subway"] .menu{border-radius:12px}
+[data-skin="subway"] .mi{gap:2px 12px;padding:12px 12px 10px 14px}
+[data-skin="subway"] .mi .nm{font:700 15px/1.35 var(--body)}
+[data-skin="subway"] .mi .nm small{font:400 12.5px/1.45 var(--body);margin-top:2px}
+[data-skin="subway"] .mi .nm small.pt{color:var(--muted)}
+[data-skin="subway"] .mi .v{font:700 15px/1.35 var(--body);color:var(--ink)}
+[data-skin="subway"] .mi .v b{font:500 12.5px var(--body);color:var(--muted)}
+[data-skin="subway"] .mi .v s{font-weight:500}
+[data-skin="subway"] .pill{font:700 11px/1.5 var(--body);letter-spacing:.04em}
+[data-skin="subway"] .tag,[data-skin="subway"] .mine{font:700 11px/1.5 var(--body);padding:0 6px}
+[data-skin="subway"] .tag.promo{background:var(--hi);color:#16233a}
+[data-skin="subway"] .mine{background:var(--sign);color:#ffffff}
+[data-skin="subway"] .mact button{font:700 13px var(--body);min-height:32px}
+[data-skin="subway"] .dhint{font-size:12.5px}
+/* + − × 아이콘: 같은 굵기의 선으로 그림 */
+[data-skin="subway"] .add,[data-skin="subway"] .qty button{font-size:0;color:var(--ink);background-repeat:no-repeat;background-position:center;
+  background-image:linear-gradient(currentColor,currentColor),linear-gradient(currentColor,currentColor);background-size:14px 2px,2px 14px}
+[data-skin="subway"] .add[data-a="dec"],[data-skin="subway"] .qty button[data-a="-"]{background-size:14px 2px,0 0}
+[data-skin="subway"] .add{width:44px;height:44px;border:2px solid var(--ink);border-radius:12px;background-color:transparent}
+[data-skin="subway"] .stp .add{width:40px;height:40px}
+[data-skin="subway"] .stp .n{font:700 15px var(--body)}
+[data-skin="subway"] .add:hover,[data-skin="subway"] .add[data-on="1"]{background-color:var(--ink);color:var(--bg)}
+[data-skin="subway"] .add:disabled{border-color:var(--line);color:var(--muted);background-color:transparent}
+[data-skin="subway"] .det-x,[data-skin="subway"] .ln-x{position:relative;font-size:0}
+[data-skin="subway"] .det-x::before,[data-skin="subway"] .det-x::after,[data-skin="subway"] .ln-x::before,[data-skin="subway"] .ln-x::after{content:"";position:absolute;left:50%;top:50%;width:16px;height:2px;border-radius:1px;background:currentColor}
+[data-skin="subway"] .det-x::before,[data-skin="subway"] .ln-x::before{transform:translate(-50%,-50%) rotate(45deg)}
+[data-skin="subway"] .det-x::after,[data-skin="subway"] .ln-x::after{transform:translate(-50%,-50%) rotate(-45deg)}
+@media (prefers-reduced-motion:no-preference){
+  [data-skin="subway"] .add,[data-skin="subway"] .qty button,[data-skin="subway"] .brand,[data-skin="subway"] .btn,[data-skin="subway"] .nutbtn{transition:background-color .15s ease-out,color .15s ease-out,transform .1s ease-out}
+  [data-skin="subway"] .add:active,[data-skin="subway"] .qty button:active,[data-skin="subway"] .btn:active{transform:scale(.95)}
+  [data-skin="subway"] .route i{transition:left .25s cubic-bezier(.2,.8,.2,1)}
+}
+/* 주문서 */
+[data-skin="subway"] .slip{border-radius:14px;background:var(--surface);box-shadow:0 10px 28px -18px rgba(22,35,58,.45)}
+[data-skin="subway"] .slip-h{border-bottom:1px solid var(--line);padding:14px 16px 12px;align-items:center}
+[data-skin="subway"] .slip-h h2{font:900 18px var(--body)}
+[data-skin="subway"] .slip-h .store{font:600 13px var(--body)}
+[data-skin="subway"] .store .mode{font:700 11px/1.6 var(--body);background:var(--sign);color:#ffffff}
+[data-skin="subway"] .clear{font:600 13px var(--body);min-height:32px}
+[data-skin="subway"] .ln{border-bottom:1px solid var(--line);padding:12px 0}
+[data-skin="subway"] .ln-b{font:700 13px var(--body)}
+[data-skin="subway"] .ln-top .n{font:700 15px var(--body)}
+[data-skin="subway"] .ln-top .amt{font:700 15px var(--body)}
+[data-skin="subway"] .ln-x{width:40px;height:40px;margin:-10px -10px 0 0;border-radius:10px}
+[data-skin="subway"] .qty{border:1.5px solid var(--line);border-radius:10px}
+[data-skin="subway"] .qty button{width:40px;height:40px;background-color:var(--sunk)}
+[data-skin="subway"] .qty span{min-width:32px;font:700 14px var(--body)}
+[data-skin="subway"] .dc{border-radius:8px;min-height:40px;padding:0 12px;font:700 13px var(--body)}
+[data-skin="subway"] .dcbox{border-radius:10px;padding:10px}
+[data-skin="subway"] .dcbox input{min-height:40px;border-radius:8px;font:700 15px var(--body)}
+[data-skin="subway"] .dcbox .mini{min-height:40px;border-radius:8px;padding:0 14px;font:700 13px var(--body)}
+[data-skin="subway"] .tot{border-top:1px solid var(--line);font-size:14px;gap:6px 10px}
+[data-skin="subway"] .tot dd{font:700 15px var(--body)}
+[data-skin="subway"] .verdict{border-radius:12px;padding:14px 16px 16px}
+[data-skin="subway"] .verdict .lbl{font-size:12.5px;letter-spacing:0}
+[data-skin="subway"] .verdict .val{font:900 28px/1.15 var(--body)}
+[data-skin="subway"] .verdict .word{font:900 30px/1 var(--body);letter-spacing:.02em;grid-row:1 / span 3}
+[data-skin="subway"] .verdict.na .word{font-size:24px}
+[data-skin="subway"] .health{border-radius:10px}
+[data-skin="subway"] .nutbtn{border:1.5px solid var(--ink);color:var(--ink);border-radius:10px;min-height:44px;font:700 14px var(--body)}
+[data-skin="subway"] .nutbtn:hover{background:var(--ink);color:var(--bg)}
+/* 하단 안내판 바 */
+[data-skin="subway"] .bar{background:var(--sign);color:#ffffff;box-shadow:0 -6px 18px -12px rgba(0,0,0,.5)}
+[data-skin="subway"] .bar .b1{font:700 clamp(12px,3.6vw,15px) var(--body)}
+[data-skin="subway"] .bar .blink{font-size:12.5px;color:var(--sign-mute);text-decoration:none}
+[data-skin="subway"] .bar .b2{font:900 clamp(15px,4.6vw,20px) var(--body);background:var(--sign-2);border-radius:8px;padding:6px 10px}
+[data-skin="subway"] .bar .b2:empty{display:none}
+[data-skin="subway"] .bar .b2.good{color:#7fe3aa} [data-skin="subway"] .bar .b2.soso{color:#ffd166} [data-skin="subway"] .bar .b2.bad{color:#ffa3a3}
+/* 팝업 */
+[data-skin="subway"] dialog.det{border:0;border-radius:16px;background:var(--surface)}
+[data-skin="subway"] .det-h{border-bottom:1px solid var(--line);align-items:center}
+[data-skin="subway"] .det-h h3{font:900 19px/1.3 var(--body)}
+[data-skin="subway"] .det-x{width:44px;height:44px;border-radius:12px;color:var(--ink)}
+[data-skin="subway"] .det td{font-family:var(--body)}
+[data-skin="subway"] .det-p div,[data-skin="subway"] .det-pt,[data-skin="subway"] .det-h2,[data-skin="subway"] .pres{border-radius:10px}
+[data-skin="subway"] .det-p .pv{font:900 18px var(--body)}
+[data-skin="subway"] .det-promo{border-radius:12px}
+[data-skin="subway"] .det-promo select,[data-skin="subway"] .det-promo input,[data-skin="subway"] .cgrid input,[data-skin="subway"] .cgrid select{min-height:40px;border-radius:8px}
+[data-skin="subway"] .det-promo .mini{min-height:40px;border:0;border-radius:8px;padding:0 14px;background:var(--ink);color:var(--bg);font:700 13px var(--body);cursor:pointer}
+[data-skin="subway"] .det-promo .mini.ghost{background:transparent;color:var(--ink);text-decoration:underline}
+[data-skin="subway"] dialog.sheet{background:var(--bg)}
+[data-skin="subway"] .sheet-h{background:var(--sign);color:#ffffff;border-bottom:0;font:900 18px var(--body)}
+[data-skin="subway"] .sheet-h .det-x{background:var(--sign-2);color:#ffffff}
+[data-skin="subway"] .cform{border:1.5px solid var(--line);border-radius:12px}
+[data-skin="subway"] .cform h3{font:900 17px var(--body)}
+[data-skin="subway"] .btn{background:var(--ink);color:var(--bg);border-radius:10px;min-height:44px;padding:0 16px;font:700 14px var(--body)}
+[data-skin="subway"] .btn.sub{background:var(--sunk);color:var(--ink)}
+[data-skin="subway"] .linkbtn{color:var(--ink);font:700 13px var(--body)}
+/* 1차 캡처 후 정리: 폰 첫 화면을 메뉴 목록까지 줄이고, 한국어 줄바꿈과 터치 크기 맞춤 */
+[data-skin="subway"] body{word-break:keep-all;overflow-wrap:anywhere}
+.addrow{display:flex;margin-top:2px}
+[data-skin="subway"] .prof{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;background:transparent;border:0;padding:0;gap:2px 12px;font-size:13px}
+[data-skin="subway"] .prof>button{grid-column:2;grid-row:1 / span 2}
+[data-skin="subway"] .modebar{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start}
+[data-skin="subway"] .modebar .mnote{margin:0}
+[data-skin="subway"] .pbar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;margin:2px 0 0}
+[data-skin="subway"] .pbar>span{font-size:12.5px;line-height:1.4}
+[data-skin="subway"] .bar .b1{white-space:normal;line-height:1.3;font-size:clamp(12.5px,3.6vw,14px)}
+[data-skin="subway"] .bar .b2{font-size:clamp(14px,4.1vw,17px);padding:6px 9px}
+[data-skin="subway"] #slipHost .slip-h h2{display:none}
+[data-skin="subway"] #slipHost .slip-h{justify-content:flex-end}
+@media (pointer:coarse){
+  [data-skin="subway"] .sign .seg button,[data-skin="subway"] .tab,[data-skin="subway"] .pbar button,[data-skin="subway"] .ghostbtn,[data-skin="subway"] .prof .ghostbtn,
+  [data-skin="subway"] .ghostbtn.clr,[data-skin="subway"] .dc,[data-skin="subway"] .skins button,[data-skin="subway"] .dcbox .mini,[data-skin="subway"] .det-promo .mini{min-height:44px}
+  [data-skin="subway"] .stp .add,[data-skin="subway"] .ln-x,[data-skin="subway"] .qty button{width:44px;height:44px}
+  [data-skin="subway"] .clear{min-height:44px;padding:0 4px}
+}
+@media (max-width:360px){
+  [data-skin="subway"] .pbar{grid-template-columns:auto auto;justify-content:space-between}
+  [data-skin="subway"] .pbar>span{grid-column:1/-1;grid-row:2}
+  [data-skin="subway"] .mi .v{font-size:14px}
+}
+/* 마무리 검토 반영: 등급 색은 노선에만, 노선 배지는 색 채움 + 글자, 매장 줄은 흰 띠 */
+.slip-r{display:flex;flex-direction:column;align-items:flex-end;gap:6px;text-align:right}
+.brand .dot{font-size:0;color:transparent}
+[data-skin="subway"] .pill{background:transparent;color:var(--ink);border:1px solid var(--line);padding:0 6px}
+[data-skin="subway"] .pill.na{color:var(--muted)}
+[data-skin="subway"] .dc{border-color:var(--ink);color:var(--ink)}
+[data-skin="subway"] .dc[aria-expanded="true"],[data-skin="subway"] .dc.applied{background:var(--ink);color:var(--bg)}
+[data-skin="subway"] .dcbox{background:var(--sunk)}
+[data-skin="subway"] .tot .save dd{color:var(--ink)}
+[data-skin="subway"] .verdict,[data-skin="subway"] .verdict.good,[data-skin="subway"] .verdict.soso,[data-skin="subway"] .verdict.bad{background:var(--sunk)}
+[data-skin="subway"] .verdict .route::after{content:"";position:absolute;left:0;right:0;top:1px;height:14px;
+  background:linear-gradient(90deg,transparent calc(var(--t30) - 1px),var(--ink) calc(var(--t30) - 1px) calc(var(--t30) + 1px),transparent calc(var(--t30) + 1px) calc(var(--t60) - 1px),var(--ink) calc(var(--t60) - 1px) calc(var(--t60) + 1px),transparent calc(var(--t60) + 1px))}
+[data-skin="subway"] .verdict .route i{z-index:1}
+[data-skin="subway"] .stores{background:var(--surface);box-shadow:0 0 0 100vmax var(--surface);clip-path:inset(0 -100vmax);padding:14px 0;border-block:1px solid var(--line)}
+[data-skin="subway"] .stores .brand{background:var(--surface)}
+[data-skin="subway"] .brand .dot{width:24px;height:24px;display:inline-grid;place-items:center;font:900 12px/1 var(--body);color:var(--ci);box-shadow:none}
+[data-skin="subway"] .brand[aria-pressed="true"]{background:var(--c);border-color:var(--c);color:var(--ci);font-weight:900}
+[data-skin="subway"] .brand[aria-pressed="true"] .dot{background:var(--ci);color:var(--c)}
+[data-skin="subway"] .brand[aria-pressed="true"] .cnt{color:var(--ci);opacity:.85}
+[data-skin="subway"] .slip-h .ghostbtn.clr{min-height:36px;padding:0 10px;font-size:13px}
+@media (pointer:coarse){[data-skin="subway"] .slip-h .ghostbtn.clr{min-height:44px}}
+[data-skin="subway"] #slipHost .slip-h{justify-content:stretch}
+[data-skin="subway"] #slipHost .slip-h>div:first-child{display:none}
+[data-skin="subway"] #slipHost .slip-r{flex:1;flex-direction:row;justify-content:space-between;align-items:center}
+[data-skin="subway"] .det td:not(:first-child),[data-skin="subway"] .det th:not(:first-child){white-space:nowrap}
+[data-skin="subway"] body{overflow-wrap:break-word}
+@media (min-width:901px){[data-skin="subway"] .prof{display:flex;flex-wrap:wrap;align-items:center}}
+@media (max-width:360px){
+  [data-skin="subway"] .mi{grid-template-columns:minmax(0,1fr) auto}
+  [data-skin="subway"] .mi .nm{grid-column:1/-1}
+  [data-skin="subway"] .mi .v{text-align:left}
+}
+@media (prefers-color-scheme: dark){:root[data-skin="subway"]:not([data-theme="light"]){--sign:#22365a;--sign-2:#33497a}}
+:root[data-skin="subway"][data-theme="dark"]{--sign:#22365a;--sign-2:#33497a}
+[data-skin="subway"] .hpill,[data-skin="subway"] .hpill.good,[data-skin="subway"] .hpill.ok,[data-skin="subway"] .hpill.bad{background:transparent;color:var(--ink);border:1px solid var(--line);font:700 12px/1.5 var(--body);padding:0 8px}
+[data-skin="subway"] .hchk .d.ok{background:transparent;box-shadow:inset 0 0 0 2px var(--ink)}
 </style>
 </head>
 <body>
@@ -334,28 +532,29 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
 
 <div class="wrap">
   <header class="top">
-    <div>
+    <div class="sign">
       <h1>단백질 <em>20g</em>당 얼마?</h1>
-      <div class="skins" role="group" aria-label="테마">테마<button type="button" data-skin="base"><i style="background:linear-gradient(135deg,#eef1ee 50%,#0f5c4c 50%)"></i>기본</button><button type="button" data-skin="sport"><i style="background:linear-gradient(135deg,#0a0c0b 50%,#c6ff3d 50%)"></i>스포츠</button><button type="button" data-skin="clean"><i style="background:linear-gradient(135deg,#ffffff 50%,#3182f6 50%)"></i>클린</button></div>
-      <p class="lede">매장과 주문 방식(매장·배달)을 고르고 먹을 메뉴를 담으면, 단백질 20g을 얻는 데 드는 돈과 가성비 등급을 보여줍니다.</p>
+      <div class="seg" role="group" aria-label="주문 방식"><button type="button" id="m-store">매장</button><button type="button" id="m-dlv">배달</button></div>
     </div>
-    <div><div class="thresh" id="thresh"></div><p class="basis" id="basis"></p></div>
+    <details class="about">
+      <summary>등급 기준과 사용법</summary>
+      <p class="lede">매장과 주문 방식(매장·배달)을 고르고 먹을 메뉴를 담으면, 단백질 20g을 얻는 데 드는 돈과 가성비 등급을 보여줍니다.</p>
+      <p class="basis" id="basis"></p>
+    </details>
   </header>
   <section class="prof" id="prof" aria-label="내 몸 기준"></section>
 
-  <section aria-labelledby="s1">
-    <p class="step" id="s1">1 · 매장 선택</p>
+  <section class="stores" aria-labelledby="s1">
+    <p class="step" id="s1"><span>1</span>매장 선택</p>
     <div class="brands" id="brands" role="group" aria-label="매장"></div>
     <div class="modebar">
-      <div class="seg" role="group" aria-label="주문 방식"><button type="button" id="m-store">매장</button><button type="button" id="m-dlv">배달</button></div>
-      <button type="button" class="ghostbtn clr" id="clearTop">주문서 비우기</button>
       <p class="mnote" id="mnote"></p>
     </div>
   </section>
 
   <div class="main">
     <section class="board" aria-labelledby="s2">
-      <p class="step" id="s2">2 · 메뉴 담기</p>
+      <p class="step" id="s2"><span>2</span>메뉴 담기</p>
       <div class="tools">
         <input id="q" class="search" type="search" placeholder="메뉴 이름 검색" aria-label="메뉴 검색">
         <select id="sort" class="sort" aria-label="정렬">
@@ -365,7 +564,6 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
           <option value="menu">메뉴판 순서</option>
           <option value="promo">행사 상품만</option>
         </select>
-        <button id="addOpen" class="ghostbtn" type="button">+ 메뉴 직접 추가</button>
       </div>
       <div class="pbar" id="pbar"></div>
       <form id="cform" class="cform" hidden novalidate>
@@ -388,19 +586,25 @@ dialog.det::backdrop{background:rgba(10,16,13,.45)}
         <div class="crow"><button class="btn" type="submit" id="cf-save">저장</button><button class="btn sub" type="button" id="cf-cancel">취소</button>
           <span class="hint">* 표시는 필수입니다. 매장가나 배달가 중 하나는 꼭 넣어 주세요. 단백질은 포장지·공식 영양정보의 1개 기준 값을 넣으세요.</span></div>
       </form>
+      <div class="thresh" id="thresh" role="img" aria-label="가성비 노선: 20g당 가격 등급 구간"></div>
       <div class="tabs" id="tabs" role="tablist" aria-label="카테고리"></div>
       <ul class="menu" id="menu"></ul>
+      <div class="addrow"><button id="addOpen" class="ghostbtn" type="button">+ 메뉴 직접 추가</button></div>
       <p class="dhint">메뉴를 누르면 상세 영양정보가 열립니다. 담기는 오른쪽 <b>+</b> 버튼으로 합니다.</p>
       <p class="src" id="cstat"></p>
       <div class="crow" id="bk"><button class="btn sub" type="button" id="exp">내 메뉴 내보내기</button><button class="btn sub" type="button" id="impb">가져오기</button><input type="file" id="imp" accept=".json,application/json" hidden><span class="hint" id="bkmsg"></span></div>
       <p class="src" id="src"></p>
       <p class="src">앱 버전 2026.11.10b</p>
+      <div class="prefs">
+        <div class="skins" role="group" aria-label="테마">테마<button type="button" data-skin="subway">기본</button><button type="button" data-skin="classic">클래식</button></div>
+        <div class="skins" role="group" aria-label="화면 밝기">화면<button type="button" data-dark="auto">자동</button><button type="button" data-dark="light">밝게</button><button type="button" data-dark="dark">어둡게</button></div>
+      </div>
     </section>
 
     <aside class="slip" id="slip" aria-labelledby="s3">
       <div class="slip-h">
-        <div><p class="step" id="s3" style="margin:0 0 2px">3 · 최종 선택</p><h2>전체 주문서</h2></div>
-        <div style="text-align:right"><div class="store" id="store"></div><button class="clear" id="clear" type="button">비우기</button></div>
+        <div><h2 id="s3"><span class="stepno">3</span>전체 주문서</h2></div>
+        <div class="slip-r"><div class="store" id="store"></div><button type="button" class="ghostbtn clr" id="clearTop">주문서 비우기</button><button class="clear" id="clear" type="button" hidden>비우기</button></div>
       </div>
       <ul class="lines" id="lines"></ul>
       <dl class="tot" id="tot"></dl>
@@ -477,9 +681,15 @@ const FLAG = {'※':'100g당 값 환산','‡':'조각 수 환산','†':'해피
 const MODE = {store:'매장', dlv:'배달'};
 const nAll = DATA.filter(b => !b.cvs).reduce((a,b)=>a+b.items.filter(i => i.fl !== '◇' && !i.disc).length,0);
 
+// 가성비 노선: 0원에서 SOSO 기준의 1.5배까지를 한 축척으로 그림 (그 너머는 끝에 붙임)
+const RMAX = T60 * 1.5;
+const rpos = v => Math.min(100, v / RMAX * 100);
+document.documentElement.style.setProperty('--t30', rpos(T30).toFixed(1) + '%');
+document.documentElement.style.setProperty('--t60', rpos(T60).toFixed(1) + '%');
+const routeHTML = v => v == null ? '' : `<span class="route" aria-hidden="true"><i${v > RMAX ? ' class="over"' : ''} style="left:${rpos(v).toFixed(1)}%"></i></span>`;
 document.getElementById('thresh').innerHTML =
-  `<span><span class="pill good">good</span> 상위 30% · <b>${won(T30)}</b> 이하</span>` +
-  `<span><span class="pill soso">soso</span> 30~60% · <b>${won(T60)}</b> 이하</span><span><span class="pill bad">bad</span> 나머지</span>`;
+  `<span class="rt"></span><span class="rk"><span><i style="background:var(--r-good)"></i><b>GOOD</b> 상위 30% · ${won(T30)} 이하</span>` +
+  `<span><i style="background:var(--r-soso)"></i><b>SOSO</b> 30~60% · ${won(T60)} 이하</span><span><i style="background:var(--r-bad)"></i><b>BAD</b> 나머지</span></span>`;
 document.getElementById('basis').textContent =
   `기준: 패스트푸드 ${nAll}개 메뉴 중 단백질이 1개에 ${MIN_P}g 이상인 ${POOL.length}개(식약처 '고단백' 표시 기준)의 매장가 순위. 음료·디저트처럼 단백질이 거의 없는 메뉴는 기준에서 뺐습니다. 편의점 상품도 같은 패스트푸드 기준으로 등급을 매깁니다.`;
 
@@ -683,6 +893,8 @@ function bindPromoBlock(i){
 
 // ---------- brand rail + mode ----------
 const brandsEl = document.getElementById('brands');
+// 노선 색 위 글자색
+const inkOn = hex => { const n = parseInt(hex.slice(1), 16), [r, g, b] = [n >> 16, n >> 8 & 255, n & 255].map(v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }); const L = .2126 * r + .7152 * g + .0722 * b; return 1.05 / (L + .05) >= (L + .05) / .066 ? '#ffffff' : '#16233a'; }; // 흰색·남색 중 대비가 큰 쪽
 function renderBrands(){
   brandsEl.innerHTML = '';
   BRANDS.forEach((b, bi) => {
@@ -691,7 +903,8 @@ function renderBrands(){
     if (b.id === 'etc' && !n && S.brand !== 'etc') return;
     const el = document.createElement('button');
     el.className = 'brand'; el.type = 'button'; el.style.setProperty('--c', b.color); el.dataset.id = b.id;
-    el.innerHTML = `<span class="dot"></span>${b.name}<span class="cnt">${n}</span>`;
+    el.innerHTML = `<span class="dot" aria-hidden="true">${esc([...b.name][0])}</span>${b.name}<span class="cnt">${n}</span>`;
+    el.style.setProperty('--ci', inkOn(b.color));
     el.setAttribute('aria-pressed', b.id === S.brand);
     el.onclick = () => { S.brand = b.id; S.cat = '전체'; S.open = null; save(); renderAll(); };
     brandsEl.appendChild(el);
@@ -748,7 +961,7 @@ function renderMenu(){
         <small>${sub}</small>${i.pt ? `<small class="pt">단백질 원료 · ${esc(i.pt)}</small>` : ''}${i.cid ? `<div class="mact"><button type="button" data-a="edit">수정</button><button type="button" class="del" data-a="del">${S.delArm === i.cid ? '한 번 더 누르면 삭제' : '삭제'}</button></div>` : ''}</div>
       <div class="v"><b>${off ? '—' : won(i.pm && i.pm.t === 'price' ? i.ef : (i.pr ?? i.ef))}</b>${i.v === null ? (off ? MODE[m] + '가 없음' : '20g당 —') : (i.pm ? '행사 시 ' : '') + '20g당 ' + won(i.v)}${i.v0 != null && i.pm ? `<br><s>정가 20g당 ${won(i.v0)}</s>` : ''}${other ? `<br><span style="color:var(--muted);font-size:12px">${other}</span>` : ''}</div>
       ${n ? `<span class="stp"><button class="add" type="button" data-a="dec" aria-label="${esc(i.n)} 1개 빼기">−</button><span class="n" aria-label="담은 개수">${n}</span><button class="add" type="button" data-a="inc" data-on="1" aria-label="${esc(i.n)} 1개 더 담기" ${off && !i.ask ? 'disabled' : ''}>+</button></span>`
-        : `<button class="add" type="button" data-a="inc" aria-label="${esc(i.n)} 담기" ${off && !i.ask ? 'disabled title="이 주문 방식의 가격이 없습니다"' : ''}>+</button>`}`;
+        : `<button class="add" type="button" data-a="inc" aria-label="${esc(i.n)} 담기" ${off && !i.ask ? 'disabled title="이 주문 방식의 가격이 없습니다"' : ''}>+</button>`}${routeHTML(i.v)}`;
     const inc = li.querySelector('[data-a="inc"]'); if (!off || i.ask) inc.onclick = () => addItem(i);
     const dec = li.querySelector('[data-a="dec"]'); if (dec) dec.onclick = () => decItem(i);
     bindDetail(li, i);
@@ -1020,14 +1233,14 @@ function renderSlip(){
   if (!cq.length) vd.innerHTML = `<span class="lbl">단백질 20g당 가격</span><span class="val">—</span><span class="word">—</span><span class="why">메뉴를 담으면 등급이 나옵니다.</span>`;
   else if (v === null) vd.innerHTML = `<span class="lbl">단백질 20g당 가격</span><span class="val">계산 불가</span><span class="word">—</span><span class="why">${prot < 1 && total > 0 ? '담은 메뉴의 단백질이 1g 미만입니다.' : '가격이 있는 메뉴가 없습니다.'}</span>`;
   else vd.innerHTML = `<span class="lbl">단백질 20g당 가격 · ${MODE[m]}${est ? ' (추정가 포함)' : ''}${po ? ' · 입력 금액' : ''}</span><span class="val">${Math.round(v).toLocaleString('ko-KR')}<small>원</small></span><span class="word">${WORD[t]}</span>
-    <span class="why">${rankText(v)}</span>`;
+    <span class="why">${rankText(v)}</span>${routeHTML(v)}`;
   document.getElementById('nutBtn').hidden = !cq.length;
   { const he = document.getElementById('health'); const n = {k:0,p:0,na:0,s:0,f:0}; const miss = {};
     cq.forEach(l => { const i = lineItem(l); ['k','p','na','s','f'].forEach(x => { if (hv(i[x])) n[x] += i[x] * l.qty; else miss[x] = 1; }); });
     Object.keys(miss).forEach(x => { if (x !== 'p') n[x] = null; });
     const h = cq.length ? health(n, true) : null; he.hidden = !h;
     if (h) he.innerHTML = healthHTML(h, '건강 등급').replace(/<ul class="hchk">[\s\S]*?<\/ul>/, '').replace(/<p class="hnote">[\s\S]*?<\/p>/, '<p class="hnote">' + (PROF ? '내 몸 기준' : '일반 성인 기준') + ' 참고용 · 항목별 이유는 아래 버튼</p>'); }
-  document.getElementById('b1').textContent = cq.length ? `${MODE[m]} ${won(total)} · 단백질 ${fmt(prot)}g` : '담은 메뉴 없음';
+  document.getElementById('b1').textContent = cq.length ? `${MODE[m]} ${won(total)} · 단백질 ${fmt(prot)}g` : '담은 메뉴 없음'; // 줄이 넘치면 ' · '에서만 끊김
   const b2 = document.getElementById('b2'); b2.className = 'b2 ' + t; b2.textContent = cq.length && v !== null ? WORD[t] + ' · 20g ' + won(v) : '';
 }
 
@@ -1117,17 +1330,28 @@ document.getElementById('clearTop').onclick = () => { if (!S.clrArm) { S.clrArm 
   bar.addEventListener('click', open);
   bar.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } }); }
 // ---------- 테마 선택 ----------
-const SKIN_BAR = {base: null, sport: '#0a0c0b', clean: '#f2f4f6'};
+// 기본 = 지하철 안내 사인, 클래식 = 예전 기본 테마 (예전 'base'·'sport'·'clean' 저장값은 새 기본으로)
+const SKIN_BAR = {subway: '#16233a', classic: null};
 function applySkin(k){
-  if (!SKIN_BAR.hasOwnProperty(k)) k = 'base';
+  if (!SKIN_BAR.hasOwnProperty(k)) k = 'subway';
   const r = document.documentElement;
-  if (k === 'base') r.removeAttribute('data-skin'); else r.setAttribute('data-skin', k);
+  r.setAttribute('data-skin', k);
   document.querySelectorAll('.skins button').forEach(b => b.setAttribute('aria-pressed', b.dataset.skin === k));
   document.querySelectorAll('meta[name="theme-color"]').forEach(m => { if (!m.dataset.orig) m.dataset.orig = m.content; m.content = SKIN_BAR[k] || m.dataset.orig; });
   try { localStorage.setItem('p20skin', k); } catch {}
 }
-document.querySelectorAll('.skins button').forEach(b => b.onclick = () => applySkin(b.dataset.skin));
-applySkin((() => { try { return localStorage.getItem('p20skin') || 'base'; } catch { return 'base'; } })());
+document.querySelectorAll('.skins button[data-skin]').forEach(b => b.onclick = () => applySkin(b.dataset.skin));
+applySkin((() => { try { return localStorage.getItem('p20skin') || 'subway'; } catch { return 'subway'; } })());
+// 화면 밝기: 자동(기기 설정) / 밝게 / 어둡게
+function applyDark(k){
+  if (k !== 'light' && k !== 'dark') k = 'auto';
+  const r = document.documentElement;
+  if (k === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', k);
+  document.querySelectorAll('.skins button[data-dark]').forEach(b => b.setAttribute('aria-pressed', b.dataset.dark === k));
+  try { localStorage.setItem('p20dark', k); } catch {}
+}
+document.querySelectorAll('.skins button[data-dark]').forEach(b => b.onclick = () => applyDark(b.dataset.dark));
+applyDark((() => { try { return localStorage.getItem('p20dark'); } catch { return null; } })());
 
 renderProf();
 renderAll();
