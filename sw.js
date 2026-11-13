@@ -1,6 +1,6 @@
-// 단백질 20g 앱 서비스워커 — 앱 버전 2026.11.10c
+// 단백질 20g 앱 서비스워커 — 앱 버전 2026.11.14d
 // 인터넷이 되면 새 파일을 먼저 받아오고(자동 업데이트), 3초 안에 안 오거나 오프라인이면 저장해 둔 파일로 엽니다.
-const CACHE = 'p20-2026.11.10c';
+const CACHE = 'p20-2026.11.14d';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 const WAIT = 3000; // 신호가 약할 때 저장본으로 여는 데까지 기다리는 시간(ms)
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
