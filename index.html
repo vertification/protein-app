@@ -195,6 +195,9 @@ dialog.sheet::backdrop{background:rgba(10,16,13,.45)}
 .ghostbtn:hover{background:var(--surface)}
 .cform{background:var(--surface);border:1.5px solid var(--accent);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px}
 [hidden]{display:none!important}
+.ln-open{all:unset;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
+.ln-open:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+@media (pointer:coarse){.ln-open{padding:11px 0;margin:-11px 0}} /* 손가락 누르는 영역 44px, 배치는 그대로 */
 .cform h3{margin:0;font-family:var(--display);font-weight:400;font-size:18px}
 .cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .cgrid label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);font-weight:500;min-width:0}
@@ -596,7 +599,7 @@ header.top{display:block}
       <p class="src" id="cstat"></p>
       <div class="crow" id="bk"><button class="btn sub" type="button" id="exp">내 메뉴 내보내기</button><button class="btn sub" type="button" id="impb">가져오기</button><input type="file" id="imp" accept=".json,application/json" hidden><span class="hint" id="bkmsg"></span></div>
       <p class="src" id="src"></p>
-      <p class="src">앱 버전 2026.11.14f</p>
+      <p class="src">앱 버전 2026.11.14g</p>
       <div class="prefs">
         <div class="skins" role="group" aria-label="테마">테마<button type="button" data-skin="subway">기본</button><button type="button" data-skin="classic">클래식</button></div>
         <div class="skins" role="group" aria-label="화면 밝기">화면<button type="button" data-dark="auto">자동</button><button type="button" data-dark="light">밝게</button><button type="button" data-dark="dark">어둡게</button></div>
@@ -755,6 +758,7 @@ async function delCustom(id){
 
 // ---------- helpers ----------
 const B = () => BRANDS.find(b => b.id === S.brand);
+let DET = null; const detB = () => DET || B(); // 주문서에서 연 상세는 그 메뉴의 매장 기준
 const customOf = bid => CUSTOM.filter(m => m.brand === bid).map(m => ({ c: bid === 'etc' ? (m.store || '기타') : (m.c || '직접 추가'), n: m.n, w: m.w ?? '', k: m.k ?? '', p: m.p, na: m.na ?? '', s: m.s ?? '', f: m.f ?? '', fl: '',
   ps: m.ps ?? null, pd: m.pd ?? null, cid: m.id, nd: m.pd == null ? '배달가 미입력' : '', ns: m.ps == null ? '매장가 미입력' : '' }));
 const itemsOf = b => [...b.items, ...customOf(b.id)];
@@ -896,7 +900,7 @@ function showPromos(){
 }
 { const d = document.getElementById('promoDlg'); document.getElementById('pd-x').onclick = () => d.close ? d.close() : d.removeAttribute('open'); d.addEventListener('click', e => { if (e.target === d) d.close(); }); }
 function promoBlock(i){
-  const b = B(); const m = modeOf(b); const cur = promoOf(i, b);
+  const b = detB(); const m = modeOf(b); const cur = promoOf(i, b);
   const autos = i.cid ? [] : autoOf(i);
   const mine = MYP.find(p => p.b === b.id && p.k === key(i) && pmode(p, m));
   const typ = mine?.t || '1+1';
@@ -909,7 +913,7 @@ function promoBlock(i){
       <button class="mini" type="submit">${mine ? '수정' : '행사 등록'}</button>${mine ? '<button class="mini ghost" type="button" id="pr-del">내 행사 삭제</button>' : ''}<p class="err" hidden style="flex-basis:100%;margin:0"></p></form></div>`;
 }
 function bindPromoBlock(i){
-  const box = document.getElementById('dpromo'); if (!box) return; const b = B(); const m = modeOf(b);
+  const box = document.getElementById('dpromo'); if (!box) return; const b = detB(); const m = modeOf(b);
   const t = box.querySelector('#pr-t'), v = box.querySelector('#pr-v');
   const mine = MYP.find(p => p.b === b.id && p.k === key(i) && pmode(p, m)); if (mine) t.value = mine.t;
   const sync = () => { v.hidden = !!NP[t.value]; v.step = t.value === 'pct' ? '1' : '10'; v.max = t.value === 'pct' ? '99' : ''; }; t.onchange = sync; sync();
@@ -1070,7 +1074,7 @@ pf('pform').onsubmit = e => { e.preventDefault(); const p = readProf();
 pf('pf-clear').onclick = () => { PROF = null; try { localStorage.removeItem('p20prof'); } catch {} applyProf(); closeProf(); renderProf(); renderAll(); };
 pf('pf-x').onclick = closeProf;
 
-const dlvPrice = i => B().dm === 'none' ? null : (i.cid && i.pd == null && B().dm === 'same') ? i.ps : i.pd;
+const dlvPrice = i => detB().dm === 'none' ? null : (i.cid && i.pd == null && detB().dm === 'same') ? i.ps : i.pd;
 // ---------- 건강 등급 (일반 성인 기준, 의학적 판단 아님) ----------
 const HW = {good:'좋음', ok:'보통', bad:'주의'};
 const hv = v => v !== '' && v != null && isFinite(v);
@@ -1129,10 +1133,10 @@ function showNutrition(){
 }
 document.getElementById('nutBtn').onclick = showNutrition;
 function showDetail(i){
-  if (B().pw && !i.cid) return showPW(i);
+  if (detB().pw && !i.cid) return showPW(i);
   const d = document.getElementById('det');
   document.getElementById('det-t').textContent = i.n;
-  document.getElementById('det-s').textContent = `${B().name} · ${i.c}${i.cid ? ' · 직접 추가한 메뉴' : ''}`;
+  document.getElementById('det-s').textContent = `${detB().name} · ${i.c}${i.cid ? ' · 직접 추가한 메뉴' : ''}`;
   const row = (label, val, unit, dv, hl) => {
     const has = val !== '' && val != null;
     const pct = has && dv ? Math.round(val / dv * 100) : null;
@@ -1149,10 +1153,10 @@ function showDetail(i){
     </tbody></table>
     ${(() => { const h = health(i, false); return h ? `<div class="det-h2">${healthHTML(h, '건강 등급')}</div>` : ''; })()}
     ${i.pt ? ptBlock(i.pt) : ''}
-    <div class="det-p">${pcell('매장가', ps, vs, i.ns)}${pcell('배달가', pd, vd, B().dm === 'none' ? '배달가 미공개' : i.nd)}</div>
+    <div class="det-p">${pcell('매장가', ps, vs, i.ns)}${pcell('배달가', pd, vd, detB().dm === 'none' ? '배달가 미공개' : i.nd)}</div>
     ${(() => { const pm = promoOf(i); const ef = unitEff(priceOf(i), pm); return pm && ef != null ? `<p class="det-n" style="margin-top:8px"><b>행사 시 1개당 ${won(ef)} · 20g당 ${won(per20(ef, i.p))}</b> (${esc(promoLabel(pm))}${NP[pm.t] ? ' 묶음으로 살 때' : ''})</p>` : ''; })()}
     ${promoBlock(i)}
-    <p class="det-n">${notes.map(esc).join('<br>')}${notes.length ? '<br>' : ''}${dvText()} ${i.cid ? '직접 입력한 값입니다.' : '영양성분: ' + esc(B().nsrc || '브랜드 공식 자료') + ', 가격 출처: ' + esc(B().snote) + ' / ' + esc(B().dnote) + '.'}</p>`;
+    <p class="det-n">${notes.map(esc).join('<br>')}${notes.length ? '<br>' : ''}${dvText()} ${i.cid ? '직접 입력한 값입니다.' : '영양성분: ' + esc(detB().nsrc || '브랜드 공식 자료') + ', 가격 출처: ' + esc(detB().snote) + ' / ' + esc(detB().dnote) + '.'}</p>`;
   bindPromoBlock(i);
   if (d.showModal) { if (!d.open) d.showModal(); } else d.setAttribute('open', '');
 }
@@ -1186,6 +1190,7 @@ function showPW(i){
 const detEl = document.getElementById('det');
 document.getElementById('det-x').onclick = () => detEl.close ? detEl.close() : detEl.removeAttribute('open');
 detEl.addEventListener('click', e => { if (e.target === detEl) detEl.close(); });
+detEl.addEventListener('close', () => { DET = null; });
 const PT_INFO = {MPI:'분리유단백 — 우유 단백질(카제인+유청)을 분리·정제', MPC:'농축유단백 — 우유 단백질을 농축(분리유단백보다 단백질 비율 낮음)', WPI:'분리유청단백 — 유청 단백질을 분리·정제', WPC:'농축유청단백 — 유청 단백질을 농축', ISP:'분리대두단백 — 콩 단백질을 분리·정제', '카제인':'카제인나트륨 — 우유 단백질 중 카제인', '현미단백':'현미에서 뽑은 식물성 단백질', '유청단백':'유청 단백질(제품 표시에 분리·농축 구분 없음)', '탈지분유':'지방을 뺀 우유 가루', '전지분유':'지방을 빼지 않은 우유 가루', '유청분말':'유청을 말린 가루(유청단백보다 단백질 비율 낮음)', '우유':'원유(생우유)', '산양유':'산양유 분말', '대두':'콩을 갈아 만든 두유 원액', '우유단백':'우유 성분 혼합원료로만 표시돼 세부 단백질 종류는 비공개', '가수분해':'효소로 잘게 쪼갠 단백질 — 흡수가 빠르고 소화 부담이 적음', '미셀라 카제인':'우유 카제인을 덩어리 그대로 분리 — 천천히 흡수', '카제인 칼슘':'카제인에 칼슘을 결합한 원료(천천히 흡수)', '유청 펩타이드':'가수분해 유청(잘게 쪼갠 유청 단백질)', '계란 흰자':'계란 흰자 단백질(알부민)', '완두':'완두콩 단백질', '현미':'현미 단백질', '녹두':'녹두 단백질', '치아씨':'치아씨 단백질', '호박씨':'호박씨 단백질', '해바라기씨':'해바라기씨 단백질', '알팔파':'알팔파(콩과 식물) 단백질'};
 function ptBlock(pt, src = '식품안전나라 품목제조보고 원재료(배합 비율 순), 일부는 제조사 판매 페이지 원재료 표시'){
   const keys = Object.keys(PT_INFO).filter(k => new RegExp('(^|[^A-Za-z가-힣])' + k + '($|[^A-Za-z가-힣])').test(pt.replace(/\([^)]*미표기\)/,'').replace(/[()·>]/g,' ')));
@@ -1195,8 +1200,8 @@ function ptBlock(pt, src = '식품안전나라 품목제조보고 원재료(배�
 function bindDetail(li, i){
   li.tabIndex = 0;
   li.setAttribute('aria-description', '누르면 상세 영양정보');
-  li.addEventListener('click', e => { if (!e.target.closest('button')) showDetail(i); });
-  li.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === li) { e.preventDefault(); showDetail(i); } });
+  li.addEventListener('click', e => { if (!e.target.closest('button')) { DET = null; showDetail(i); } });
+  li.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target === li) { e.preventDefault(); DET = null; showDetail(i); } });
 }
 
 function decItem(i){
@@ -1231,7 +1236,7 @@ function renderSlip(){
     const li = document.createElement('li'); li.className = 'ln' + (l.qty === 0 ? ' zero' : '');
     const open = S.open === ok;
     const btn = dc !== null ? (list == null ? '입력가 ' : '할인 ') + won(dc) : (list == null ? '가격 입력' : '할인');
-    li.innerHTML = `<div class="ln-top"><span class="n">${esc(i.n)}</span>
+    li.innerHTML = `<div class="ln-top"><button type="button" class="n ln-open" title="상세 정보 보기">${esc(i.n)}</button>
         <span class="amt">${has && base != null && base * l.qty !== amt ? `<s>${won(base * l.qty)}</s>` : ''}${has ? won(amt) : '—'}</span>
         <button type="button" class="ln-x" data-a="x" aria-label="${esc(i.n)} 주문서에서 삭제" title="삭제">×</button></div>
       ${pm && l.qty ? `<p class="ln-promo">${esc(promoLabel(pm))} 행사 적용${promoNudge(pm, l.qty) ? ' · ' + promoNudge(pm, l.qty) : ''}</p>` : ''}
@@ -1246,6 +1251,7 @@ function renderSlip(){
     li.querySelector('[data-a="-"]').onclick = () => { if (l.qty > 0) l.qty--; save(); renderSlip(); renderMenu(); };
     li.querySelector('[data-a="x"]').onclick = () => { S.cart = S.cart.filter(x => x !== l); if (S.open === ok) S.open = null; save(); renderSlip(); renderMenu(); };
     li.querySelector('[data-a="+"]').onclick = () => { l.qty++; save(); renderSlip(); renderMenu(); };
+    li.querySelector('.ln-open').onclick = () => { DET = lb; showDetail(i); };
     li.querySelector('.dc').onclick = () => { S.open = open ? null : ok; renderSlip(); if (!open) setTimeout(() => document.getElementById('dc-in')?.focus(), 0); };
     const f = li.querySelector('form');
     if (f) {
