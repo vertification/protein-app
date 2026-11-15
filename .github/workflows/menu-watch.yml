@@ -1,0 +1,33 @@
+name: menu-watch
+
+on:
+  schedule:
+    - cron: "0 0 * * 1"   # 매주 월요일 오전 9시(한국 시간)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: watch
+        run: node scripts/menu-watch.mjs
+      - name: save
+        run: |
+          git config user.name "menu-watch-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add menuwatch.json
+          git diff --cached --quiet || (git commit -m "menu watch" && git push)
+      - name: issue
+        if: hashFiles('menuwatch-issue.md') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue create --title "신메뉴 후보 $(date +%Y-%m-%d)" --body-file menuwatch-issue.md
