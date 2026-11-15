@@ -195,6 +195,12 @@ dialog.sheet::backdrop{background:rgba(10,16,13,.45)}
 .ghostbtn:hover{background:var(--surface)}
 .cform{background:var(--surface);border:1.5px solid var(--accent);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px}
 [hidden]{display:none!important}
+.combos{margin:0 12px 12px;padding:12px 14px;border:1px solid var(--line,#d8dcd9);border-radius:12px;background:var(--surface,#fff)}
+.combos>.k{margin:0 0 8px;font-weight:700;font-size:14px}
+.combos .det-promo{margin:0 0 8px}
+.combos .plist{margin:0;padding:0;list-style:none;font-size:13px}
+.combos .plist li{padding:6px 0;border-top:1px solid var(--line,#e3e6e4)}
+.combos .plist li:first-child{border-top:0}
 .ln-open{all:unset;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
 .ln-open:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 @media (pointer:coarse){.ln-open{padding:11px 0;margin:-11px 0}} /* 손가락 누르는 영역 44px, 배치는 그대로 */
@@ -594,12 +600,12 @@ header.top{display:block}
       <div class="thresh" id="thresh" role="img" aria-label="가성비 노선: 20g당 가격 등급 구간"></div>
       <div class="tabs" id="tabs" role="tablist" aria-label="카테고리"></div>
       <ul class="menu" id="menu"></ul>
-      <div class="addrow"><button id="addOpen" class="ghostbtn" type="button">+ 메뉴 직접 추가</button></div>
+      <div class="addrow"><button id="addOpen" class="ghostbtn" type="button">+ 메뉴 직접 추가</button><button id="budOpen" class="ghostbtn" type="button">예산으로 찾기</button></div>
       <p class="dhint">메뉴를 누르면 상세 영양정보가 열립니다. 담기는 오른쪽 <b>+</b> 버튼으로 합니다.</p>
       <p class="src" id="cstat"></p>
       <div class="crow" id="bk"><button class="btn sub" type="button" id="exp">내 메뉴 내보내기</button><button class="btn sub" type="button" id="impb">가져오기</button><input type="file" id="imp" accept=".json,application/json" hidden><span class="hint" id="bkmsg"></span></div>
       <p class="src" id="src"></p>
-      <p class="src">앱 버전 2026.11.14g</p>
+      <p class="src">앱 버전 2026.11.15</p>
       <div class="prefs">
         <div class="skins" role="group" aria-label="테마">테마<button type="button" data-skin="subway">기본</button><button type="button" data-skin="classic">클래식</button></div>
         <div class="skins" role="group" aria-label="화면 밝기">화면<button type="button" data-dark="auto">자동</button><button type="button" data-dark="light">밝게</button><button type="button" data-dark="dark">어둡게</button></div>
@@ -616,6 +622,7 @@ header.top{display:block}
       <div class="verdict" id="verdict" aria-live="polite"></div>
       <div class="health" id="health" hidden></div>
       <button class="nutbtn" id="nutBtn" type="button" hidden>영양성분 합계·건강 등급 자세히</button>
+      <div class="combos" id="combos"></div>
     </aside>
   </div>
 </div>
@@ -641,12 +648,19 @@ header.top{display:block}
         <option value="keep">체중 유지</option>
         <option value="cut">감량 (열량 −15%)</option>
         <option value="bulk">근육 증가 (열량 +10%)</option></select></label>
+      <label class="wide">하루 단백질 목표 직접 입력 (g, 선택 · 비우면 계산값)<input id="pf-pg" type="number" inputmode="numeric" min="20" max="400" placeholder="예: 120"></label>
     </div>
     <div class="pres" id="pf-res"></div>
     <p class="cerr" id="pf-err" hidden></p>
     <div class="crow"><button class="btn" type="submit">저장</button><button class="btn sub" type="button" id="pf-clear">일반 성인 기준으로 되돌리기</button></div>
     <p class="det-n">하루 열량은 Mifflin-St Jeor 공식으로 구한 기초대사량에 활동량을 곱해 추정합니다. 단백질 목표는 활동량과 목표에 따라 체중 1kg당 0.9~2.0g입니다(예: 보통 활동량이면 유지 1.2g · 근육 증가 1.6g · 감량 1.6g). 한국인 영양소 섭취기준(성인 약 0.9g)과 운동하는 사람 대상 연구(1.4~2.0g, 1.6g 이상은 추가 효과가 작음)를 바탕으로 했습니다. 근육량이나 질환은 반영하지 못하는 추정값이며, 나트륨 기준(하루 2,000mg)은 체형과 관계없이 같습니다.</p>
   </form>
+</dialog>
+<dialog class="det" id="budDlg" aria-labelledby="bd-t">
+  <div class="det-h"><div><h3 id="bd-t">예산으로 찾기</h3><p>예산 안에서 단백질을 가장 많이 먹는 조합을 매장별로 찾습니다. 지금 주문 방식(매장/배달) 가격 기준이고, 같은 메뉴는 2개까지 담습니다.</p></div><button class="det-x" type="button" id="bd-x" aria-label="닫기">×</button></div>
+  <div class="det-b"><form id="budForm" class="det-promo"><label class="k">예산 <input id="bd-v" type="number" inputmode="numeric" min="1000" step="500" placeholder="예: 10000" aria-label="예산(원)"></label>
+    <label class="k"><input type="checkbox" id="bd-cvs"> 편의점 포함</label><button class="mini" type="submit">찾기</button><p class="err" hidden style="flex-basis:100%;margin:0"></p></form>
+    <div id="bd-res"></div></div>
 </dialog>
 <dialog class="det" id="promoDlg" aria-labelledby="pd-t">
   <div class="det-h"><div><h3 id="pd-t">행사 정보</h3><p>자동으로 모은 행사와 내가 등록한 행사</p></div><button class="det-x" type="button" id="pd-x" aria-label="닫기">×</button></div>
@@ -764,12 +778,16 @@ const customOf = bid => CUSTOM.filter(m => m.brand === bid).map(m => ({ c: bid =
 const itemsOf = b => [...b.items, ...customOf(b.id)];
 const modeOf = b => (S.mode === 'dlv' && b.dm !== 'none') ? 'dlv' : 'store';
 const mode = () => modeOf(B());
+// 내가 고친 가격 {매장id|메뉴key: {store, dlv}} — 매장에서 본 가격으로 덮어씀 (이 기기에만)
+let MYPR = (() => { try { return JSON.parse(localStorage.getItem('p20myprice') || '{}') || {}; } catch { return {}; } })();
+const myPrice = (i, b, m) => { if (i.cid || b.pw) return null; const o = MYPR[b.id + '|' + key(i)]; return o && o[m] != null ? o[m] : null; };
 function priceOf(i, b = B()){
+  const mine = myPrice(i, b, modeOf(b)); if (mine != null) return mine;
   if (modeOf(b) === 'store') return i.ps;
   if (i.cid && i.pd == null && b.dm === 'same') return i.ps;
   return i.pd;
 }
-const noteOf = (i, b = B()) => modeOf(b) === 'dlv' ? (i.cid && i.pd == null && b.dm === 'same' ? '' : i.nd) : i.ns;
+const noteOf = (i, b = B()) => myPrice(i, b, modeOf(b)) != null ? '내가 고친 가격' : modeOf(b) === 'dlv' ? (i.cid && i.pd == null && b.dm === 'same' ? '' : i.nd) : i.ns;
 const BR = id => BRANDS.find(b => b.id === id);
 const cart = () => S.cart.filter(l => l.b === S.brand);
 const lineItem = l => { const b = BR(l.b); return b ? itemsOf(b).find(i => key(i) === l.k) : null; };
@@ -787,7 +805,13 @@ const PROMO = {cvs: PROMO_EMBED.cvs || null, ff: PROMO_EMBED.ff || null};
 let MYP = lsj('p20promo', []);     // [{b, k, n, t, v, to, m}]
 // 프로틴 파우더: 산 가격을 제품별로 이 기기에 저장 {메뉴 id: 원}
 let PWP = lsj('p20pw2', {}); // p20pw(11.14 첫 버전)는 메뉴 id 배정이 달라 버림
-const applyPW = () => DATA.filter(b => b.pw).forEach(b => b.items.forEach(i => { i.ps = i.pd = PWP[i.id] ?? null; i.ns = i.ps == null ? '산 가격 미입력' : '내가 산 가격'; }));
+let PWLAB = lsj('p20pwlab', {});  // 라벨 값 고침 {id: {sv, sp, g}}
+let PWLOG = lsj('p20pwlog', []);  // 구매 기록 [{id, n, d, v, p}]
+const applyPW = () => DATA.filter(b => b.pw).forEach(b => b.items.forEach(i => {
+  i._o = i._o || {w: i.w, sv: i.sv, sp: i.sp}; const L = PWLAB[i.id] || {};
+  i.w = L.g ?? i._o.w; i.sv = L.sv ?? i._o.sv; i.sp = L.sp ?? i._o.sp; i.lab = !!PWLAB[i.id];
+  i.p = Math.round(i.w / i.sv * i.sp); i.k = Math.round(i.w / i.sv * i.sk);
+  i.ps = i.pd = PWP[i.id] ?? null; i.ns = i.ps == null ? '산 가격 미입력' : '내가 산 가격'; }));
 applyPW();
 // 단백질 원료 묶음 (pt 문자열 → 거르기용 분류)
 const PTG = [['all','원료 전체'],['wpi','WPI 계열 (WPI·가수분해 WPI)'],['wpc','WPC만'],['whey','유청 혼합 (WPI+WPC)'],['milk','우유·카제인 포함 혼합'],['plant','식물성·ISP'],['mixap','동물성·식물성 혼합'],['etc','미확인']];
@@ -802,7 +826,7 @@ function renderPtf(){
   ptfEl.innerHTML = PTG.filter(([k]) => n[k]).map(([k, t]) => `<option value="${k}">${t} · ${n[k]}개</option>`).join('');
   if (!n[S.ptf]) S.ptf = 'all'; ptfEl.value = S.ptf;
 }
-const pwSub = i => [esc(i.c), Math.round(i.w / i.sv) + '회분', '1회 ' + fmt(i.sv) + 'g · 단백질 ' + fmt(i.sp) + 'g', '총 단백질 ' + fmt(i.p) + 'g'].join(' · ');
+const pwSub = i => [i.lab ? '라벨 값 고침' : '', esc(i.c), Math.round(i.w / i.sv) + '회분', '1회 ' + fmt(i.sv) + 'g · 단백질 ' + fmt(i.sp) + 'g', '총 단백질 ' + fmt(i.p) + 'g'].filter(Boolean).join(' · ');
 let PHIDE = lsj('p20phide', {});   // 숨긴 자동 행사
 S.pon = lsj('p20pon', true);       // 행사 반영 켜기/끄기
 // 예전 저장값(카테고리|메뉴이름)을 메뉴 id로 옮김 — 2026.11.10b 이전에 담은 주문서·등록한 행사용
@@ -1028,6 +1052,7 @@ const GOAL = {keep:{n:'체중 유지', m:1}, cut:{n:'감량', m:0.85}, bulk:{n:'
 const PKG = {'1.2':{keep:0.9, bulk:1.4, cut:1.2}, '1.375':{keep:1.0, bulk:1.6, cut:1.4}, '1.55':{keep:1.2, bulk:1.6, cut:1.6}, '1.725':{keep:1.4, bulk:1.8, cut:1.8}, '1.9':{keep:1.6, bulk:1.8, cut:2.0}};
 const pkgOf = p => (PKG[String(p.act)] || PKG['1.55'])[p.goal] || 1.2;
 let PROF = null; try { PROF = JSON.parse(localStorage.getItem('p20prof') || 'null'); } catch {}
+let GOALP = null; try { GOALP = Number(localStorage.getItem('p20goal')) || null; } catch {} // 하루 단백질 목표(g) 직접 입력 — 있으면 계산값 대신 씀
 function calcProf(p){
   const bmr = 10 * p.w + 6.25 * p.h - 5 * p.age + (p.sex === 'f' ? -161 : 5);
   const g = GOAL[p.goal] || GOAL.keep;
@@ -1037,14 +1062,15 @@ function calcProf(p){
 function applyProf(){
   if (PROF) { const r = calcProf(PROF); DV.k = r.kcal; DV.p = r.prot; DV.s = Math.round(DV0.s * r.kcal / 2000); DV.f = Math.round(DV0.f * r.kcal / 2000); }
   else Object.assign(DV, DV0);
+  if (GOALP) DV.p = GOALP;
 }
 applyProf();
 const dvText = () => `1일 기준치${PROF ? '(내 몸 기준)' : ''}: 열량 ${DV.k.toLocaleString('ko-KR')}kcal · 단백질 ${DV.p}g · 나트륨 2,000mg · 당류 ${DV.s}g · 포화지방 ${DV.f}g.`;
 function renderProf(){
   const el = document.getElementById('prof');
   if (PROF) { const g = GOAL[PROF.goal] || GOAL.keep;
-    el.innerHTML = `<span class="pl">내 몸 기준 · ${PROF.sex === 'f' ? '여' : '남'} ${PROF.age}세 ${PROF.h}cm ${PROF.w}kg · ${g.n}</span><span>하루 <b>${DV.k.toLocaleString('ko-KR')}kcal</b> · 단백질 <b>${DV.p}g</b> · 한 끼 단백질 <b>${Math.round(DV.p / 3)}g</b></span><button class="ghostbtn" type="button" id="profOpen">수정</button>`;
-  } else el.innerHTML = `<span class="pl">영양 기준: 일반 성인(하루 2,000kcal · 단백질 55g)</span><button class="ghostbtn" type="button" id="profOpen">+ 내 몸 기준 설정</button>`;
+    el.innerHTML = `<span class="pl">내 몸 기준 · ${PROF.sex === 'f' ? '여' : '남'} ${PROF.age}세 ${PROF.h}cm ${PROF.w}kg · ${g.n}</span><span>하루 <b>${DV.k.toLocaleString('ko-KR')}kcal</b> · 단백질 <b>${DV.p}g</b>${GOALP ? '(직접 정한 목표)' : ''} · 한 끼 단백질 <b>${Math.round(DV.p / 3)}g</b></span><button class="ghostbtn" type="button" id="profOpen">수정</button>`;
+  } else el.innerHTML = `<span class="pl">영양 기준: 일반 성인(하루 2,000kcal · 단백질 ${DV.p}g${GOALP ? ' · 직접 정한 목표' : ''})</span><button class="ghostbtn" type="button" id="profOpen">${GOALP ? '수정' : '+ 내 몸 기준 설정'}</button>`;
   document.getElementById('profOpen').onclick = openProf;
 }
 const pf = id => document.getElementById(id);
@@ -1064,14 +1090,18 @@ function openProf(){
   const p = PROF || {sex:'m', age:'', h:'', w:'', act:1.55, goal:'keep'};
   document.querySelector(`input[name="pf-sex"][value="${p.sex}"]`).checked = true;
   pf('pf-age').value = p.age; pf('pf-h').value = p.h; pf('pf-w').value = p.w; pf('pf-act').value = String(p.act); pf('pf-goal').value = p.goal;
+  pf('pf-pg').value = GOALP ?? '';
   profPreview(); if (d.showModal) d.showModal(); else d.setAttribute('open', '');
 }
 const closeProf = () => { const d = pf('profDlg'); d.close ? d.close() : d.removeAttribute('open'); };
 pf('pform').addEventListener('input', profPreview);
+const saveGoal = () => { const g = Number(pf('pf-pg').value); GOALP = g >= 20 && g <= 400 ? Math.round(g) : null; try { GOALP ? localStorage.setItem('p20goal', GOALP) : localStorage.removeItem('p20goal'); } catch {} };
 pf('pform').onsubmit = e => { e.preventDefault(); const p = readProf();
+  const bodyEmpty = !pf('pf-age').value && !pf('pf-h').value && !pf('pf-w').value;
+  if (!p && bodyEmpty && pf('pf-pg').value) { saveGoal(); applyProf(); closeProf(); renderProf(); renderAll(); return; } // 목표만 저장
   if (!p) { pf('pf-err').textContent = '나이 15~100세, 키 120~220cm, 몸무게 30~250kg 범위로 넣어 주세요.'; pf('pf-err').hidden = false; return; }
-  PROF = p; try { localStorage.setItem('p20prof', JSON.stringify(p)); } catch {} applyProf(); closeProf(); renderProf(); renderAll(); };
-pf('pf-clear').onclick = () => { PROF = null; try { localStorage.removeItem('p20prof'); } catch {} applyProf(); closeProf(); renderProf(); renderAll(); };
+  PROF = p; try { localStorage.setItem('p20prof', JSON.stringify(p)); } catch {} saveGoal(); applyProf(); closeProf(); renderProf(); renderAll(); };
+pf('pf-clear').onclick = () => { PROF = null; GOALP = null; try { localStorage.removeItem('p20prof'); localStorage.removeItem('p20goal'); } catch {} applyProf(); closeProf(); renderProf(); renderAll(); };
 pf('pf-x').onclick = closeProf;
 
 const dlvPrice = i => detB().dm === 'none' ? null : (i.cid && i.pd == null && detB().dm === 'same') ? i.ps : i.pd;
@@ -1142,7 +1172,8 @@ function showDetail(i){
     const pct = has && dv ? Math.round(val / dv * 100) : null;
     return `<tr class="${hl ? 'hl' : ''}"><td>${label}</td><td>${has ? fmt(val) + unit : '—'}</td><td>${pct == null ? '—' : pct + '%'}${pct == null ? '' : `<span class="bar"><i class="${pct >= 50 && label !== '단백질' ? 'hi' : ''}" style="width:${Math.min(pct,100)}%"></i></span>`}</td></tr>`;
   };
-  const ps = i.ps, pd = dlvPrice(i), vs = per20(ps, i.p), vd = per20(pd, i.p);
+  const db = detB(), mps = myPrice(i, db, 'store'), mpd = myPrice(i, db, 'dlv');
+  const ps = mps ?? i.ps, pd = mpd ?? dlvPrice(i), vs = per20(ps, i.p), vd = per20(pd, i.p);
   const pcell = (k, pr, v, note) => `<div><span class="k">${k}</span><span class="pv">${pr == null ? '가격 없음' : won(pr)}</span>
     <span class="r">${v == null ? (pr == null ? (note || '') : '단백질이 적어 계산 불가') : `20g당 ${won(v)} · <span class="pill ${tier(v)}">${WORD[tier(v)]}</span>`}</span>
     ${v != null ? `<span class="r">${rankText(v)}</span>` : ''}${note && pr != null ? `<span class="r">${note === '추정' ? '추정가' : note}</span>` : ''}</div>`;
@@ -1153,14 +1184,27 @@ function showDetail(i){
     </tbody></table>
     ${(() => { const h = health(i, false); return h ? `<div class="det-h2">${healthHTML(h, '건강 등급')}</div>` : ''; })()}
     ${i.pt ? ptBlock(i.pt) : ''}
-    <div class="det-p">${pcell('매장가', ps, vs, i.ns)}${pcell('배달가', pd, vd, detB().dm === 'none' ? '배달가 미공개' : i.nd)}</div>
+    <div class="det-p">${pcell('매장가', ps, vs, mps != null ? '내가 고친 가격' : i.ns)}${pcell('배달가', pd, vd, mpd != null ? '내가 고친 가격' : detB().dm === 'none' ? '배달가 미공개' : i.nd)}</div>
+    ${i.cid ? '' : `<form class="det-promo" id="myprForm"><span class="k">가격 고치기 (매장에서 본 값 · 이 기기에만)</span>
+      <label class="k">매장 <input id="mp-s" type="number" inputmode="numeric" min="0" step="10" value="${mps ?? ''}" placeholder="${i.ps ?? '없음'}" aria-label="매장가(원)"></label>
+      <label class="k">배달 <input id="mp-d" type="number" inputmode="numeric" min="0" step="10" value="${mpd ?? ''}" placeholder="${dlvPrice(i) ?? '없음'}" aria-label="배달가(원)"></label>
+      <button class="mini" type="submit">저장</button>${mps != null || mpd != null ? '<button class="mini ghost" type="button" id="mp-del">원래 가격으로</button>' : ''}<p class="err" hidden style="flex-basis:100%;margin:0"></p></form>`}
     ${(() => { const pm = promoOf(i); const ef = unitEff(priceOf(i), pm); return pm && ef != null ? `<p class="det-n" style="margin-top:8px"><b>행사 시 1개당 ${won(ef)} · 20g당 ${won(per20(ef, i.p))}</b> (${esc(promoLabel(pm))}${NP[pm.t] ? ' 묶음으로 살 때' : ''})</p>` : ''; })()}
     ${promoBlock(i)}
     <p class="det-n">${notes.map(esc).join('<br>')}${notes.length ? '<br>' : ''}${dvText()} ${i.cid ? '직접 입력한 값입니다.' : '영양성분: ' + esc(detB().nsrc || '브랜드 공식 자료') + ', 가격 출처: ' + esc(detB().snote) + ' / ' + esc(detB().dnote) + '.'}</p>`;
   bindPromoBlock(i);
+  const mf = document.getElementById('myprForm');
+  if (mf) { const db = detB(), k = db.id + '|' + key(i);
+    const done = () => { try { localStorage.setItem('p20myprice', JSON.stringify(MYPR)); } catch {} renderAll(); showDetail(i); };
+    mf.onsubmit = e => { e.preventDefault(); const o = {}; let bad = false;
+      [['store', '#mp-s'], ['dlv', '#mp-d']].forEach(([m, sel]) => { const raw = mf.querySelector(sel).value.trim(); if (raw === '') return; const n = Number(raw); if (!isFinite(n) || n <= 0) bad = true; else o[m] = Math.round(n); });
+      if (bad) { const er = mf.querySelector('.err'); er.textContent = '0보다 큰 금액을 넣거나 칸을 비워 두세요.'; er.hidden = false; return; }
+      if (Object.keys(o).length) MYPR[k] = o; else delete MYPR[k]; done(); };
+    const del = document.getElementById('mp-del'); if (del) del.onclick = () => { delete MYPR[k]; done(); }; }
   if (d.showModal) { if (!d.open) d.showModal(); } else d.setAttribute('open', '');
 }
 function showPW(i){
+  i = DATA.find(b => b.pw).items.find(x => x.id === i.id) || i; // 목록의 복사본 대신 최신 값(라벨 고침 반영)
   const d = document.getElementById('det');
   document.getElementById('det-t').textContent = i.n;
   document.getElementById('det-s').textContent = `프로틴 파우더 · ${i.c}`;
@@ -1175,15 +1219,29 @@ function showPW(i){
     <div class="det-p"><div><span class="k">내가 산 가격</span><span class="pv">${pr == null ? '미입력' : won(pr)}</span>
       <span class="r">${v == null ? '가격을 넣으면 20g당 가격이 나와요' : `20g당 ${won(v)} · <span class="pill ${tier(v, TH.pw)}">${WORD[tier(v, TH.pw)]}</span> <span class="k">(프로틴 기준)</span>`}</span>
       ${v != null ? `<span class="r">1회분 ${won(pr / n)} · 패스트푸드 ${rankText(v)}</span>` : ''}</div></div>
+    ${v != null ? `<p class="det-n"><b>단백질 30g 채우는 데 ${won(pr / i.p * 30)}</b> · 패스트푸드 GOOD 기준(20g당 ${won(T30)})이면 약 ${won(T30 / 20 * 30)} → 약 ${(T30 / v).toFixed(1)}배 차이</p>` : ''}
     <form id="pwForm" class="det-promo"><span class="k">산 가격 (배송비 포함 권장)</span>
       <input id="pw-v" type="number" inputmode="numeric" min="0" step="10" placeholder="예: 65000" aria-label="산 가격(원)" value="${pr ?? ''}">
       <button class="mini" type="submit">${pr == null ? '저장' : '수정'}</button>${pr != null ? '<button class="mini ghost" type="button" id="pw-del">지우기</button>' : ''}<p class="err" hidden style="flex-basis:100%;margin:0"></p></form>
-    <p class="det-n">총 단백질 = 통 순중량 ÷ 1회 제공량 × 1회 단백질. 영양 출처: ${esc(i.src || B().nsrc)}. 산 가격은 이 기기에만 저장됩니다.</p>`;
+    ${(() => { const log = PWLOG.map((r, x) => ({...r, x})).filter(r => r.id === i.id).reverse(); return log.length ? `<div class="det-pt"><span class="k">구매 기록 (이 제품)</span><ul class="plist">${log.map(r => `<li>${esc(r.d)} · ${won(r.v)} · 20g당 ${won(r.v / r.p * 20)} <button type="button" class="linkbtn" data-lx="${r.x}">삭제</button></li>`).join('')}</ul></div>` : ''; })()}
+    <form id="labForm" class="det-promo"><span class="k">라벨 값 고치기 ${i.lab ? '(고친 값 사용 중)' : '(산 통 라벨과 다를 때)'}</span>
+      <label class="k">1회 g <input id="lb-sv" type="number" inputmode="decimal" min="1" step="0.1" value="${i.sv}" aria-label="1회 제공량(g)"></label>
+      <label class="k">1회 단백질 g <input id="lb-sp" type="number" inputmode="decimal" min="1" step="0.1" value="${i.sp}" aria-label="1회 단백질(g)"></label>
+      <label class="k">통 순중량 g <input id="lb-g" type="number" inputmode="numeric" min="50" step="1" value="${i.w}" aria-label="통 순중량(g)"></label>
+      <button class="mini" type="submit">저장</button>${i.lab ? '<button class="mini ghost" type="button" id="lb-del">원래 값으로</button>' : ''}<p class="err" hidden style="flex-basis:100%;margin:0"></p></form>
+    <p class="det-n">총 단백질 = 통 순중량 ÷ 1회 제공량 × 1회 단백질. 영양 출처: ${i.lab ? '내가 고친 라벨 값 (원래: ' + esc(i.src || B().nsrc) + ')' : esc(i.src || B().nsrc)}. 산 가격·기록·고친 값은 이 기기에만 저장됩니다.</p>`;
   const f = document.getElementById('pwForm'), inp = document.getElementById('pw-v');
   const done = () => { lss('p20pw2', PWP); applyPW(); renderAll(); showPW(i); };
   f.onsubmit = e => { e.preventDefault(); const x = Number(inp.value);
     if (inp.value === '' || !isFinite(x) || x <= 0) { const er = f.querySelector('.err'); er.textContent = '0보다 큰 금액을 넣으세요.'; er.hidden = false; return; }
+    if (PWP[i.id] !== Math.round(x)) { PWLOG.push({id: i.id, n: i.n, d: todayK(), v: Math.round(x), p: i.p}); lss('p20pwlog', PWLOG); }
     PWP[i.id] = Math.round(x); done(); };
+  document.querySelectorAll('[data-lx]').forEach(b => b.onclick = () => { PWLOG.splice(+b.dataset.lx, 1); lss('p20pwlog', PWLOG); showPW(i); });
+  const lf = document.getElementById('labForm');
+  lf.onsubmit = e => { e.preventDefault(); const sv = Number(lf.querySelector('#lb-sv').value), sp = Number(lf.querySelector('#lb-sp').value), g = Number(lf.querySelector('#lb-g').value);
+    if (!(sv > 0 && sp > 0 && sp <= sv && g >= sv)) { const er = lf.querySelector('.err'); er.textContent = '1회 단백질은 1회 제공량 이하, 통 순중량은 1회 제공량 이상이어야 합니다.'; er.hidden = false; return; }
+    const o = i._o; if (sv === o.sv && sp === o.sp && g === o.w) delete PWLAB[i.id]; else PWLAB[i.id] = {sv, sp, g}; lss('p20pwlab', PWLAB); applyPW(); renderAll(); showPW(i); };
+  const ld = document.getElementById('lb-del'); if (ld) ld.onclick = () => { delete PWLAB[i.id]; lss('p20pwlab', PWLAB); applyPW(); renderAll(); showPW(i); };
   const del = document.getElementById('pw-del'); if (del) del.onclick = () => { delete PWP[i.id]; done(); };
   if (d.showModal) { if (!d.open) d.showModal(); } else d.setAttribute('open', '');
 }
@@ -1285,7 +1343,7 @@ function renderSlip(){
       ${po ? '<button class="mini ghost" type="button" id="payReset">취소</button>' : ''}
       <p class="err" hidden></p><p style="flex-basis:100%;margin:0;font-size:12px;color:var(--muted)">2+1·묶음 할인이나 배달비처럼 메뉴별로 나누기 어려운 금액은 영수증의 최종 금액을 넣으세요. 계산된 금액보다 높아도 됩니다. 메뉴나 수량을 바꾸면 다시 계산 금액으로 돌아갑니다.</p></form>` : ''}
     <dt>총 단백질</dt><dd>${fmt(prot)}g</dd>
-    ${PROF ? `<dt>내 한 끼 단백질 목표(${Math.round(DV.p / 3)}g) 대비</dt><dd>${Math.round(prot / (DV.p / 3) * 100)}%</dd>` : ''}
+    ${PROF || GOALP ? `<dt>한 끼 목표(${Math.round(DV.p / 3)}g) 대비</dt><dd>${Math.round(prot / (DV.p / 3) * 100)}%</dd><dt>하루 목표(${DV.p}g) 대비</dt><dd>${Math.round(prot / DV.p * 100)}% · 남은 ${fmt(Math.max(0, DV.p - prot))}g</dd>` : ''}
     ${skipped ? `<dt style="grid-column:1/-1;color:var(--bad)">가격 없는 메뉴 ${skipped}개는 계산에서 뺐습니다</dt>` : ''}` : '';
   if (cq.length) {
     tot.querySelector('#payBtn').onclick = () => { S.payOpen = !S.payOpen; renderSlip(); if (S.payOpen) setTimeout(() => document.getElementById('pay-in')?.focus(), 0); };
@@ -1312,6 +1370,52 @@ function renderSlip(){
     if (h) he.innerHTML = healthHTML(h, '건강 등급').replace(/<ul class="hchk">[\s\S]*?<\/ul>/, '').replace(/<p class="hnote">[\s\S]*?<\/p>/, '<p class="hnote">' + (PROF ? '내 몸 기준' : '일반 성인 기준') + ' 참고용 · 항목별 이유는 아래 버튼</p>'); }
   document.getElementById('b1').textContent = cq.length ? `${MODE[m]} ${won(total)} · 단백질 ${fmt(prot)}g` : '담은 메뉴 없음'; // 줄이 넘치면 ' · '에서만 끊김
   const b2 = document.getElementById('b2'); b2.className = 'b2 ' + t; b2.textContent = cq.length && v !== null ? WORD[t] + ' · 20g ' + won(v) : '';
+  renderCombos();
+}
+// 자주 먹는 조합: 지금 주문서를 이름 붙여 저장 → 나중에 한 번에 다시 담기 (이 기기에만)
+let COMBO = (() => { try { return JSON.parse(localStorage.getItem('p20combo') || '[]') || []; } catch { return []; } })();
+const saveCombo = () => { try { localStorage.setItem('p20combo', JSON.stringify(COMBO)); } catch {} };
+function renderCombos(){
+  const el = document.getElementById('combos'); if (!el) return;
+  const live = c => c.cart.filter(l => lineItem(l));
+  el.innerHTML = `<p class="k">자주 먹는 조합</p>
+    ${S.cart.some(l => l.qty) ? `<form id="cbForm" class="det-promo"><input id="cb-n" maxlength="20" placeholder="이름 (예: 점심 단골)" aria-label="조합 이름"><button class="mini" type="submit">지금 주문서 저장</button></form>` : ''}
+    <ul class="plist">${COMBO.length ? COMBO.map((c, x) => { const ls = live(c); const p = ls.reduce((a, l) => a + (lineItem(l).p || 0) * l.qty, 0);
+      return `<li><b>${esc(c.n)}</b> · ${ls.length}종 · 단백질 ${fmt(p)}g <button type="button" class="linkbtn" data-cb="${x}">담기</button> <button type="button" class="linkbtn" data-cbx="${x}">삭제</button></li>`; }).join('') : '<li>저장한 조합 없음 · 메뉴를 담은 뒤 이름을 붙여 저장하세요</li>'}</ul>`;
+  const f = el.querySelector('#cbForm');
+  if (f) f.onsubmit = e => { e.preventDefault(); const n = f.querySelector('input').value.trim() || ('조합 ' + (COMBO.length + 1));
+    COMBO = COMBO.filter(c => c.n !== n); COMBO.unshift({n, cart: S.cart.filter(l => l.qty).map(l => ({b: l.b, k: l.k, qty: l.qty, dc: {...l.dc}}))}); saveCombo(); renderCombos(); };
+  el.querySelectorAll('[data-cb]').forEach(x => x.onclick = () => { const c = COMBO[+x.dataset.cb];
+    S.cart = live(c).map(l => ({b: l.b, k: l.k, qty: l.qty, dc: {...l.dc}})); S.example = false; save(); renderAll(); });
+  el.querySelectorAll('[data-cbx]').forEach(x => x.onclick = () => { COMBO.splice(+x.dataset.cbx, 1); saveCombo(); renderCombos(); });
+}
+
+// ---------- 예산으로 찾기: 매장마다 '가격 ≤ 예산'에서 단백질 합이 최대인 조합 (0/1 배낭 문제, 100원 단위) ----------
+function bestCombo(b, budget){
+  const its = itemsOf(b).filter(i => !i.disc && i.p > 0).map(i => ({i, pr: priceOf(i, b)})).filter(x => x.pr != null && x.pr > 0 && x.pr <= budget);
+  const U = 100, W = Math.floor(budget / U), cand = its.flatMap(x => [x, x]); // 같은 메뉴 2개까지
+  const dp = new Float64Array(W + 1), take = cand.map(() => new Uint8Array(W + 1));
+  cand.forEach((x, n) => { const w = Math.ceil(x.pr / U); for (let c = W; c >= w; c--) if (dp[c - w] + x.i.p > dp[c] + 1e-9) { dp[c] = dp[c - w] + x.i.p; take[n][c] = 1; } });
+  let c = W; const pick = new Map();
+  for (let n = cand.length - 1; n >= 0; n--) if (take[n][c]) { const x = cand[n]; pick.set(x.i, (pick.get(x.i) || 0) + 1); c -= Math.ceil(x.pr / U); }
+  const lines = [...pick].map(([i, q]) => ({i, q, pr: priceOf(i, b)}));
+  return {b, lines, prot: lines.reduce((a, l) => a + l.i.p * l.q, 0), cost: lines.reduce((a, l) => a + l.pr * l.q, 0)};
+}
+{ const d = document.getElementById('budDlg'), f = document.getElementById('budForm'), res = document.getElementById('bd-res');
+  document.getElementById('budOpen').onclick = () => { if (d.showModal) d.showModal(); else d.setAttribute('open', ''); };
+  document.getElementById('bd-x').onclick = () => d.close ? d.close() : d.removeAttribute('open');
+  d.addEventListener('click', e => { if (e.target === d) d.close(); });
+  f.onsubmit = e => { e.preventDefault(); const v = Number(f.querySelector('#bd-v').value), er = f.querySelector('.err');
+    if (!(v >= 1000 && v <= 100000)) { er.textContent = '1,000원 ~ 100,000원 사이로 넣으세요.'; er.hidden = false; return; } er.hidden = true;
+    const cvs = f.querySelector('#bd-cvs').checked;
+    const rs = BRANDS.filter(b => !b.pw && b.id !== 'etc' && (cvs || !b.cvs)).map(b => bestCombo(b, v)).filter(r => r.lines.length).sort((x, y) => y.prot - x.prot).slice(0, 5);
+    res.innerHTML = rs.length ? rs.map((r, x) => `<div class="det-p" style="margin-top:10px"><div><span class="k">${x + 1}. ${esc(r.b.name)} · ${MODE[modeOf(r.b)]}</span>
+      <span class="pv">단백질 ${fmt(r.prot)}g · ${won(r.cost)}</span><span class="r">20g당 ${won(r.cost / r.prot * 20)} · <span class="pill ${tier(r.cost / r.prot * 20)}">${WORD[tier(r.cost / r.prot * 20)]}</span></span>
+      <span class="r">${r.lines.map(l => esc(l.i.n) + (l.q > 1 ? ' ×' + l.q : '')).join(' + ')}</span>
+      <button type="button" class="ghostbtn" data-bd="${x}" style="margin-top:8px">주문서에 담기</button></div></div>`).join('') : '<p class="k">이 예산으로 살 수 있는 메뉴가 없습니다.</p>';
+    res.querySelectorAll('[data-bd]').forEach(btn => btn.onclick = () => { const r = rs[+btn.dataset.bd];
+      r.lines.forEach(l => { const k = key(l.i); const ex = S.cart.find(x => x.b === r.b.id && x.k === k); if (ex) ex.qty += l.q; else S.cart.push({b: r.b.id, k, qty: l.q, dc: {}}); });
+      S.example = false; save(); renderAll(); btn.textContent = '담았습니다'; btn.disabled = true; }); };
 }
 
 // ---------- add / edit form ----------
