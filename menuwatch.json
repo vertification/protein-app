@@ -1,0 +1,40 @@
+{
+ "updated": "2026-11-16T10:15+09:00",
+ "brands": {
+  "mc": {
+   "ok": true,
+   "total": 116,
+   "missing": [
+    "홍천 우리쌀 칩"
+   ]
+  },
+  "bk": {
+   "ok": true,
+   "total": 200,
+   "missing": [
+    "와주X불고기와주"
+   ]
+  },
+  "mt": {
+   "ok": false,
+   "error": "fetch failed",
+   "missing": []
+  },
+  "sw": {
+   "ok": false,
+   "error": "403 https://www.subway.co.kr/menuList/sandwich",
+   "missing": []
+  },
+  "pp": {
+   "ok": true,
+   "total": 39,
+   "missing": [
+    "허니갈릭간장 치킨 (1/2/4/8조각 클래식)",
+    "허니갈릭간장 치킨 (1/2/4/8조각 스파이시)",
+    "허니갈릭간장 순살치킨 (2/4/8/12조각)",
+    "반반치박"
+   ]
+  }
+ },
+ "fresh": []
+}
