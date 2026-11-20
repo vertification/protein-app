@@ -2,7 +2,7 @@ name: menu-watch
 
 on:
   schedule:
-    - cron: "0 0 * * 1"   # 매주 월요일 오전 9시(한국 시간)
+    - cron: "0 0 * * 1"   # 매주 월요일 오전 9시(한국 시간). 맥도날드·버거킹 신메뉴는 index.html에 자동 추가
   workflow_dispatch:
 
 permissions:
@@ -24,8 +24,9 @@ jobs:
         run: |
           git config user.name "menu-watch-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add menuwatch.json
-          git diff --cached --quiet || (git commit -m "menu watch" && git push)
+          git add menuwatch.json index.html
+          if [ -f menu_add.json ]; then git add menu_add.json; fi
+          git diff --cached --quiet || (git commit -m "menu watch" && git pull --rebase && git push)
       - name: issue
         if: hashFiles('menuwatch-issue.md') != ''
         env:
