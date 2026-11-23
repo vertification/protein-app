@@ -605,7 +605,7 @@ header.top{display:block}
       <p class="src" id="cstat"></p>
       <div class="crow" id="bk"><button class="btn sub" type="button" id="exp">내 메뉴 내보내기</button><button class="btn sub" type="button" id="impb">가져오기</button><input type="file" id="imp" accept=".json,application/json" hidden><span class="hint" id="bkmsg"></span></div>
       <p class="src" id="src"></p>
-      <p class="src">앱 버전 2026.11.21</p>
+      <p class="src">앱 버전 2026.11.23</p>
       <div class="prefs">
         <div class="skins" role="group" aria-label="테마">테마<button type="button" data-skin="subway">기본</button><button type="button" data-skin="classic">클래식</button></div>
         <div class="skins" role="group" aria-label="화면 밝기">화면<button type="button" data-dark="auto">자동</button><button type="button" data-dark="light">밝게</button><button type="button" data-dark="dark">어둡게</button></div>
@@ -1538,6 +1538,7 @@ applyDark((() => { try { return localStorage.getItem('p20dark'); } catch { retur
 renderProf();
 renderAll();
 loadPromos();
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
 </script>
 
 </body>
